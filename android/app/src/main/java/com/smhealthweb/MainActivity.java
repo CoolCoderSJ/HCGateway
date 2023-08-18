@@ -1,4 +1,4 @@
-package com.SMHealthWeb;
+package com.HCGateway;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

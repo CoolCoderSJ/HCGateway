@@ -1,4 +1,4 @@
-package com.SMHealthWeb.newarchitecture.components;
+package com.HCGateway.newarchitecture.components;
 
 import com.facebook.jni.HybridData;
 import com.facebook.proguard.annotations.DoNotStrip;

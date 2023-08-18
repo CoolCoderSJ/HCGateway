@@ -1,4 +1,4 @@
-package com.SMHealthWeb.newarchitecture;
+package com.HCGateway.newarchitecture;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -19,9 +19,9 @@ import com.facebook.react.fabric.CoreComponentsRegistry;
 import com.facebook.react.fabric.FabricJSIModuleProvider;
 import com.facebook.react.fabric.ReactNativeConfig;
 import com.facebook.react.uimanager.ViewManagerRegistry;
-import com.SMHealthWeb.BuildConfig;
-import com.SMHealthWeb.newarchitecture.components.MainComponentsRegistry;
-import com.SMHealthWeb.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
+import com.HCGateway.BuildConfig;
+import com.HCGateway.newarchitecture.components.MainComponentsRegistry;
+import com.HCGateway.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.SMHealthWeb.newarchitecture.modules;
+package com.HCGateway.newarchitecture.modules;
 
 import com.facebook.jni.HybridData;
 import com.facebook.react.ReactPackage;
