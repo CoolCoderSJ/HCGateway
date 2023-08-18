@@ -7,6 +7,7 @@ import {
   IconRegistry,
   Layout,
   Text,
+  Input
 } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import * as eva from '@eva-design/eva';
@@ -20,6 +21,12 @@ import {
 import axios from 'axios';
 import ReactNativeForegroundService from "@supersami/rn-foreground-service";
 ReactNativeForegroundService.register();
+
+const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
+const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
+const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
+const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
+
 
 const readData = () => {
   getSdkStatus().then(status => {
@@ -93,11 +100,46 @@ ReactNativeForegroundService.start({
   color: "#000000",
 });
 
+let session = null;
+get("session").then((res) => {
+  console.log(res)
+  if (res) session = res;
+})
+
+const [uname, setUname] = React.useState('');
+const [passw, setPassw] = React.useState('');
+
+const login = () => {
+  
+}
+
 export default () => (
   <>
     <ApplicationProvider {...eva} theme={eva.dark}>
       <Layout style={styles.container}>
-        
+        {!session ? 
+          <container>
+            <Text style={styles.text} category='h1'>Welcome to HCGateway</Text>
+            <Text style={styles.text} category='h3'>Please login or signup for an account. If you don't have an account, it will be created for you.</Text>
+            <Input
+              placeholder='Enter a username'
+              value={uname}
+              onChangeText={nextValue => setUname(nextValue)}
+            />
+            <Input
+              placeholder='Enter a password'
+              value={passw}
+              onChangeText={nextValue => setPassw(nextValue)}
+            />
+             <Button onPress={() => login()}>
+              Login
+            </Button>
+          </container>
+          :
+          <container>
+
+          </container>
+        }
       </Layout>
     </ApplicationProvider>
   </>
