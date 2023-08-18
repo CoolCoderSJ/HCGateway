@@ -1,5 +1,5 @@
 {
-  "name": "SMHealthWeb",
+  "name": "hcgateway",
   "version": "0.0.1",
   "private": true,
   "scripts": {
