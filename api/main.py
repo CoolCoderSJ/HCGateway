@@ -16,9 +16,9 @@ from cryptography.fernet import Fernet
 import base64
 
 client = (Client()
-    .set_endpoint('https://appwrite.shuchir.dev/v1') 
-    .set_project('hcgateway')               
-    .set_key(os.environ['APPWRITE']))   
+    .set_endpoint(f'{os.environ["APPWRITE_HOST"]}/v1') 
+    .set_project(os.environ['APPWRITE_ID'])               
+    .set_key(os.environ['APPWRITE_KEY']))   
 db = Databases(client)
 users = Users(client)
 
@@ -188,4 +188,4 @@ def fetch(method):
         doc['data'] = json.loads(fernet.decrypt(doc['data'].encode()).decode())
     return jsonify(docs), 200
 
-app.run(host='0.0.0.0', port=6644, debug=False)
+app.run(host=os.environ.get('HOST', '0.0.0.0'), port=os.environ.get('PORT', 6644), debug=os.environ.get('DEBUG', False))

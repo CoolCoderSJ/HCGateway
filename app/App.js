@@ -101,7 +101,7 @@ const sync = () => {
               records[i].metadata.id,
             ).then((result) => {
               // console.log('Retrieved record: ', result );
-              axios.post(`http://192.168.40.235:6644/api/sync/${recordType}`, {
+              axios.post(`https://api.hcgateway.shuchir.dev/api/sync/${recordType}`, {
                 userid: userid,
                 data: result
               })
@@ -109,7 +109,7 @@ const sync = () => {
           }
           }
           else {
-            setTimeout(() => axios.post(`http://192.168.40.235:6644/api/sync/${recordType}`, {
+            setTimeout(() => axios.post(`https://api.hcgateway.shuchir.dev/api/sync/${recordType}`, {
               userid: userid,
               data: records
             }), 3000)
@@ -151,7 +151,7 @@ export default App = () => {
   })
 
   const login = (uname, passw) => {
-    axios.post("http://192.168.40.235:6644/api/login", {
+    axios.post("https://api.hcgateway.shuchir.dev/api/login", {
       username: uname,
       password: passw
     }).then(res => {
