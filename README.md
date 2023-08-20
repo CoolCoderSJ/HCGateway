@@ -31,6 +31,8 @@ Support for more types is planned for the future.
 - The server encrypts the data using Fernet encryption, then stores it in a database hosted on a custom instance of Appwrite.
 - The server exposes an API to let developers login and get the data for their users.
 
+The platform is currently a **one way sync**. Any changes made to health connect data by other apps will not be synced. The ability to add/edit/delete data through the api is planned for the future.
+
 ## Get Started
 - There is a live instance hosted at https://api.hcgateway.shuchir.dev/ that you can use. You can also host your own instance. To learn more on Self Hosting, skip down to the Self Hosting section.
 - You can install the mobile application through the APK file. You can find the latest APK file in the releases section of this repository, or by downloading the `app-release.apk` file from the root of this repository.
