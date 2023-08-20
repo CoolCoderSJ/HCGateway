@@ -7,23 +7,23 @@ The platform consists of two parts:
 
 ## How it Works
 - The mobile application pings the server every 2 hours to send data. The following data types are supported-
-    - Basal Metabolic Rate
-    - Blood Glucose
-    - Blood Pressure
-    - Body Fat
-    - Distance
-    - Exercise
-    - Heart Rate
-    - Height
-    - Nutrition
-    - Oxygen Saturation
-    - Power
-    - Sleep
-    - Speed
-    - Steps
-    - Total Calories Burned
-    - VO2 Max
-    - Weight
+    - Basal Metabolic Rate (`basalMetabolicRate`)
+    - Blood Glucose (`bloodGlucose`)
+    - Blood Pressure (`bloodPressure`)
+    - Body Fat (`bodyFat`)
+    - Distance (`distance`)
+    - Exercise (`exerciseSession`)
+    - Heart Rate (`heartRate`)
+    - Height (`height`)
+    - Nutrition (`nutrition`)
+    - Oxygen Saturation (`oxygenSaturation`)
+    - Power (`power`)
+    - Sleep (`sleepSession`)
+    - Speed (`speed`)
+    - Steps (`steps`)
+    - Total Calories Burned (`totalCaloriesBurned`)
+    - VO2 Max (`vo2Max`)
+    - Weight (`weight`)
 
 Support for more types is planned for the future.
 
@@ -104,6 +104,8 @@ The REST API is a simple Flask application that exposes the following endpoints:
 
 - `/api/fetch/<method>` - Get data from the database.
     - Method: `POST`
+    - URL Parameters:
+        - `method` - The method to use. The methods are listed above, next to each supported data type under the `How It Works` section. For example, to get all blood glucose data, you would use `/api/fetch/bloodGlucose`.
     - Body Parameters:
         - `userid` - The user ID of the user
         - `queries` - This is an optional parameter. You can filter your response if you'd like. The format is an array of strings, where each string is a query. The following are examples of queries-
