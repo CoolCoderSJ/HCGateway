@@ -27,21 +27,31 @@ CORS(app)
 
 def get_all_docs(data, collection, queries=[]):
     docs = []
-    queries.append(Query.limit(100))
-    querylength = len(queries)
-    while True:
-        if docs:
-            queries.append(Query.cursorAfter(docs[-1]['$id']))
-        try:
-            results = db.list_documents(data, collection, queries=queries)
-        except: return docs
-        if len(results['documents']) == 0:
-            break
-        results = results['documents']
-        docs += results
-        print(data, collection, len(docs))
-        if len(queries) != querylength:
-            queries.pop()
+    haslimit = False
+    for query in queries:
+        print(query)
+        if query.startswith("limit"): 
+            print(int(query.split("limit(")[1].split(")")[0]))
+            if int(query.split("limit(")[1].split(")")[0]) <= 100: print("true"); haslimit = True
+    
+    if not haslimit:
+        queries.append(Query.limit(100))
+        querylength = len(queries)
+        while True:
+            if docs:
+                queries.append(Query.cursorAfter(docs[-1]['$id']))
+            try:
+                results = db.list_documents(data, collection, queries=queries)
+            except: return docs
+            if len(results['documents']) == 0:
+                break
+            results = results['documents']
+            docs += results
+            print(data, collection, len(docs))
+            if len(queries) != querylength:
+                queries.pop()
+    else:
+        return db.list_documents(data, collection, queries=queries)['documents']
     return docs
 
 @app.route("/api/login", methods=['POST'])
@@ -145,5 +155,37 @@ def sync(method):
 
     return jsonify({'success': True}), 200
 
+@app.route("/api/fetch/<method>", methods=['POST'])
+def fetch(method):
+    if not "userid" in request.json:
+        return jsonify({'error': 'no user id provided'}), 400
+    if not method:
+        return jsonify({'error': 'no method provided'}), 400
+
+    userid = request.json['userid']
+    user = users.get(userid)
+    hashed_password = user['password']
+    key = base64.urlsafe_b64encode(hashed_password.encode("utf-8").ljust(32)[:32])
+    fernet = Fernet(key)
+
+    if not "queries" in request.json:
+        queries = []
+    else:
+        queries = request.json['queries']
+    
+    try:
+        dbid = db.get(userid)['$id']
+    except:
+        return jsonify({'error': 'no database found for user'}), 404
+
+    try:
+        collectionid = db.get_collection(dbid, method)['$id']
+    except:
+        return jsonify({'error': 'no collection found for user'}), 404
+
+    docs = get_all_docs(dbid, collectionid, queries=queries)
+    for doc in docs:
+        doc['data'] = json.loads(fernet.decrypt(doc['data'].encode()).decode())
+    return jsonify(docs), 200
 
 app.run(host='0.0.0.0', port=6644, debug=False)
