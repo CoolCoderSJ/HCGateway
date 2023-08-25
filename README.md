@@ -1,5 +1,5 @@
 # HCGateway
-HCGateway is a platform to let developers connect to the Health Connect API on Android via a REST API.
+HCGateway is a platform to let developers connect to the Health Connect API on Android via a REST API. You can view the documentation for the REST API [here](https://hcgateway.shuchir.dev/)
 
 The platform consists of two parts:
 - A REST API/server
@@ -87,6 +87,8 @@ user_id: string {
 
 
 ## REST API
+This documentation is also available at https://hcgateway.shuchir.dev/
+
 The REST API is a simple Flask application that exposes the following endpoints:
 - `/api/login` - Login a user and get the session ID.
     - Method: `POST`
