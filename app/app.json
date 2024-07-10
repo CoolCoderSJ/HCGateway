@@ -63,7 +63,8 @@
         "android.permission.health.READ_TOTAL_CALORIES_BURNED",
         "android.permission.health.READ_VO2_MAX",
         "android.permission.health.READ_WEIGHT",
-        "android.permission.health.READ_WHEELCHAIR_PUSHES"
+        "android.permission.health.READ_WHEELCHAIR_PUSHES",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {

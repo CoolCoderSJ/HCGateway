@@ -4,10 +4,12 @@ import {
   initialize,
   requestPermission,
   readRecords,
+  readRecord
 } from 'react-native-health-connect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
+import ReactNativeForegroundService from '@supersami/rn-foreground-service';
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -17,6 +19,8 @@ const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys();
 
 let login;
 let apiBase = 'https://api.hcgateway.shuchir.dev';
+let lastSync = null;
+let taskDelay = 7200 * 1000; // 2 hours
 
 Toast.show({
   type: 'info',
@@ -48,6 +52,14 @@ get('login')
     login = res;
   }
 })
+
+get('lastSync')
+.then(res => {
+  if (res) {
+    lastSync = res;
+  }
+})
+
 
 const askForPermissions = async () => {
   const isInitialized = await initialize();
@@ -100,6 +112,57 @@ const askForPermissions = async () => {
   }
 };
 
+const sync = async () => {
+  const isInitialized = await initialize();
+  console.log("Syncing data...");
+  Toast.show({
+    type: 'info',
+    text1: "Syncing data...",
+  })
+  await setPlain('lastSync', new Date().toISOString());
+  lastSync = new Date().toISOString();
+
+  let recordTypes = ["ActiveCaloriesBurned", "BasalBodyTemperature", "BloodGlucose", "BloodPressure", "BasalMetabolicRate", "BodyFat", "BodyTemperature", "BoneMass", "CyclingPedalingCadence", "CervicalMucus", "ExerciseSession", "Distance", "ElevationGained", "FloorsClimbed", "HeartRate", "Height", "Hydration", "LeanBodyMass", "MenstruationFlow", "MenstruationPeriod", "Nutrition", "OvulationTest", "OxygenSaturation", "Power", "RespiratoryRate", "RestingHeartRate", "SleepSession", "Speed", "Steps", "StepsCadence", "TotalCaloriesBurned", "Vo2Max", "Weight", "WheelchairPushes"]; 
+  
+  for (let i = 0; i < recordTypes.length; i++) {
+      let records = await readRecords(recordTypes[i],
+        {
+          timeRangeFilter: {
+            operator: "between",
+            startTime: String(new Date(new Date().setDate(new Date().getDate() - 29)).toISOString()),
+            endTime: String(new Date().toISOString())
+          }
+        }
+      );
+      console.log(recordTypes[i]);
+
+      if (['SleepSession', 'Speed', 'HeartRate'].includes(recordTypes[i])) {
+        console.log("INSIDE IF - ", recordTypes[i])
+        for (let j=0; j<records.length; j++) {
+          console.log("INSIDE FOR", j, recordTypes[i])
+          setTimeout(async () => {
+            try {
+              let record = await readRecord(recordTypes[i], records[j].metadata.id);
+              await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
+                userid: login,
+                data: record
+              })
+            }
+            catch (err) {
+              console.log(err)
+            }
+          }, j*3000)
+        }
+      }
+
+      // else {
+      //   await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
+      //     userid: login,
+      //     data: records
+      //   })
+      // }
+  }
+}
   
 
 export default function App() {
@@ -148,11 +211,48 @@ export default function App() {
     }
   }
 
+  React.useEffect(() => {
+    get('login')
+    .then(res => {
+      if (res) {
+        login = res;
+        get('taskDelay')
+        .then(res => {
+          if (res) taskDelay = Number(res);
+          ReactNativeForegroundService.add_task(() => sync(), {
+            delay: taskDelay,
+            onLoop: true,
+            taskId: 'hcgateway_sync',
+            onError: e => console.log(`Error logging:`, e),
+          });
+        })
+        forceUpdate()
+      }
+    })
+  }, [login])
+
+
+  const startTask = () => {
+    ReactNativeForegroundService.start({
+      id: 1244,
+      title: 'HCGateway Sync Service',
+      message: 'HCGateway is working in the background to sync your data.',
+      icon: 'ic_launcher',
+      setOnlyAlertOnce: true,
+      color: '#000000',
+    });
+  };
+
+  const stopTask = () => {
+    ReactNativeForegroundService.stopAll();
+  };
+
   return (
     <View style={styles.container}>
       {login &&
         <View>
           <Text style={{ fontSize: 20, marginVertical: 10 }}>Your User ID is {login}. Do NOT share this with anyone.</Text>
+          <Text style={{ fontSize: 17, marginVertical: 10 }}>Last Sync: {lastSync}</Text>
 
           <Text style={{ marginTop: 10, fontSize: 15 }}>API Base URL:</Text>
           <TextInput
@@ -164,6 +264,64 @@ export default function App() {
               setPlain('apiBase', text);
             }}
           />
+
+          <Text style={{ marginTop: 10, fontSize: 15 }}>Sync Interval (in seconds) (defualt is 2 hours):</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Sync Interval"
+            keyboardType='numeric'
+            defaultValue={(taskDelay / 1000).toString()}
+            onChangeText={text => {
+              taskDelay = Number(text) * 1000;
+              setPlain('taskDelay', String(text * 1000));
+              ReactNativeForegroundService.update_task(() => sync(), {
+                delay: taskDelay,
+              })
+              Toast.show({
+                type: 'success',
+                text1: "Sync interval updated",
+              })
+            }}
+          />
+
+          <View style={{ marginTop: 20 }}>
+            <Button
+              title="Sync Now"
+              onPress={() => {
+                sync()
+              }}
+            />
+          </View>
+
+          <View
+          style={{ 
+            marginTop: 20,
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            width: '100%'
+           }}
+          >
+            <Button
+              title="Start Sync Service"
+              onPress={() => {
+                startTask()
+                Toast.show({
+                  type: 'success',
+                  text1: "Sync service started",
+                })
+              }}
+            />
+            <Button
+              title="Stop Sync Service"
+              onPress={() => {
+                stopTask();
+                Toast.show({
+                  type: 'success',
+                  text1: "Sync service stopped",
+                })
+              }}
+            />
+          </View>
 
           <View style={{ marginTop: 100 }}>
             <Button
@@ -216,7 +374,7 @@ export default function App() {
           <Button
             title="Login"
             onPress={() => {
-              loginFunc();
+              loginFunc()
             }}
           />
         </View>
