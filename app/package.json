@@ -19,7 +19,8 @@
     "expo-system-ui": "^3.0.7",
     "react": "18.2.0",
     "react-native": "0.74.3",
-    "react-native-health-connect": "^2.1.0"
+    "react-native-health-connect": "^2.1.0",
+    "react-native-toast-message": "^2.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

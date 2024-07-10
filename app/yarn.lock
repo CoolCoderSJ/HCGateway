@@ -5322,6 +5322,11 @@ react-native-health-connect@^2.1.0:
   resolved "https://registry.yarnpkg.com/react-native-health-connect/-/react-native-health-connect-2.1.0.tgz#c2be2185aabbe213e70832302fe3d48dddafb8dc"
   integrity sha512-X9aRh0oRC7D3qQp/uCo9GY2nM90a+FeSOUxmIFIkf/aUR//waQ2HHxSAhUWU8ax2g86jyam7Yk5U3SHW+STN/w==
 
+react-native-toast-message@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/react-native-toast-message/-/react-native-toast-message-2.2.0.tgz#c53a4746b15616858a7d61c4386b92cbe9fbf911"
+  integrity sha512-AFti8VzUk6JvyGAlLm9/BknTNDXrrhqnUk7ak/pM7uCTxDPveAu2ekszU0on6vnUPFnG04H/QfYE2IlETqeaWw==
+
 react-native@0.74.3:
   version "0.74.3"
   resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.74.3.tgz#eef32cd10afb1f4b26f75b79eefd6b220c63953c"
