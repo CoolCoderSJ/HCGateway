@@ -1,4 +1,38 @@
 {
-  "name": "HCGateway",
-  "displayName": "HCGateway"
+  "expo": {
+    "name": "HCGateway",
+    "slug": "hcgateway",
+    "version": "0.1.0",
+    "plugins": [
+      "expo-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 26
+          }
+        }
+      ]
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "dev.shuchir.hcgateway"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
 }

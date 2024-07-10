@@ -5,4 +5,8 @@
     <integer-array  name="androidcolors">
     <item>@color/blue</item>
     </integer-array>
+
+    <color name="colorPrimary">#00C4D1</color>
+    <color name="iconBackground">#00C4D1</color>
+    <color name="splashscreen_background">#FFFFFF</color>
   </resources>
