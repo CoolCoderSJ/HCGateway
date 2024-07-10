@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import ReactNativeForegroundService from '@supersami/rn-foreground-service';
+import {requestNotifications} from 'react-native-permissions';
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -212,6 +213,10 @@ export default function App() {
   }
 
   React.useEffect(() => {
+    requestNotifications(['alert']).then(({status, settings}) => {
+      console.log(status, settings)
+    });
+
     get('login')
     .then(res => {
       if (res) {
@@ -240,7 +245,7 @@ export default function App() {
       icon: 'ic_launcher',
       setOnlyAlertOnce: true,
       color: '#000000',
-    });
+    }).then(() => console.log('Foreground service started'));
   };
 
   const stopTask = () => {
