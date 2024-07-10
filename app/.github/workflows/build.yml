@@ -23,6 +23,7 @@ on:
           - production
 jobs:
   build:
+    environment: build
     runs-on: ${{ github.event.inputs.os }}
     strategy:
       matrix:
