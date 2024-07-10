@@ -1,30 +1,16 @@
+import { StyleSheet, Text, View, TextInput, Button } from 'react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import {
-  ApplicationProvider,
-  Button,
-  Icon,
-  IconRegistry,
-  Layout,
-  Text,
-  Input,
-  Modal,
-  Card
-} from '@ui-kitten/components';
-import { EvaIconsPack } from '@ui-kitten/eva-icons';
-import * as eva from '@eva-design/eva';
 import {
   initialize,
   requestPermission,
   readRecords,
-  readRecord,
-  getSdkStatus,
-  SdkAvailabilityStatus,
+  readRecord
 } from 'react-native-health-connect';
-import axios from 'axios';
-import ReactNativeForegroundService from "@supersami/rn-foreground-service";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-ReactNativeForegroundService.register();
+import Toast from 'react-native-toast-message';
+import axios from 'axios';
+import ReactNativeForegroundService from '@supersami/rn-foreground-service';
+import {requestNotifications} from 'react-native-permissions';
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -32,219 +18,397 @@ const get = async (key) => { try { const value = await AsyncStorage.getItem(key)
 const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
 
+let login;
+let apiBase = 'https://api.hcgateway.shuchir.dev';
+let lastSync = null;
+let taskDelay = 7200 * 1000; // 2 hours
 
-const askForPermission = () => {
-  getSdkStatus().then(status => {
-    console.log('status', status);
-    console.log(SdkAvailabilityStatus.SDK_AVAILABLE, SdkAvailabilityStatus.SDK_UNAVAILABLE, SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED)
-    if (status === SdkAvailabilityStatus.SDK_AVAILABLE) {
-      console.log('SDK is available');
-    }
-  
-    if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE) {
-      console.log('SDK is not available');
-    }
-  
-    if (
-      status === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED
-    ) {
-      console.log('SDK is not available, provider update required');
-    }
-  })
-
-  initialize().then(isInitialized => {
-    console.log('isInitialized', isInitialized);
-    requestPermission([
-      { accessType: 'read', recordType: 'BasalMetabolicRate' },
-      { accessType: 'read', recordType: 'BloodGlucose' },
-      { accessType: 'read', recordType: 'BloodPressure' },
-      { accessType: 'read', recordType: 'BodyFat' },
-      { accessType: 'read', recordType: 'Distance' },
-      { accessType: 'read', recordType: 'ExerciseSession' },
-      { accessType: 'read', recordType: 'HeartRate' },
-      { accessType: 'read', recordType: 'Height' },
-      { accessType: 'read', recordType: 'Nutrition' },
-      { accessType: 'read', recordType: 'OxygenSaturation' },
-      { accessType: 'read', recordType: 'Power' },
-      { accessType: 'read', recordType: 'SleepSession' },
-      { accessType: 'read', recordType: 'Speed' },
-      { accessType: 'read', recordType: 'Steps' },
-      { accessType: 'read', recordType: 'TotalCaloriesBurned' },
-      { accessType: 'read', recordType: 'Weight' },
-      { accessType: 'read', recordType: 'Vo2Max' },
-    ]).then(grantedPermissions => {
-      console.log('grantedPermissions', grantedPermissions);
-    })
-  })
-  
-};
-
-const sync = () => {
-  console.log("a")
-  get("session").then((userid) => {
-    console.log(userid)
-    initialize().then(isInitialized => {
-    console.log('isInitialized', isInitialized);
-      [ 'BasalMetabolicRate', 'BloodGlucose', 'BloodPressure', 'BodyFat', 'Distance', 'ExerciseSession', 'HeartRate', 'Height', 'Nutrition', 'OxygenSaturation', 'Power', 'SleepSession', 'Speed', 'Steps', 'TotalCaloriesBurned', 'Weight', 'Vo2Max'].forEach((recordType) => {
-        readRecords(recordType, {
-          timeRangeFilter: {
-            operator: 'between',
-            startTime: String(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString()),
-            endTime: String(new Date().toISOString()),
-          },
-        }).then(records => {
-          console.log(recordType, records.length, "\n\n");
-          if (["SleepSession", "Speed", "HeartRate"].includes(recordType)) {
-          for (let i=0; i<records.length; i++) {
-            setTimeout(() => readRecord(
-              recordType,
-              records[i].metadata.id,
-            ).then((result) => {
-              // console.log('Retrieved record: ', result );
-              axios.post(`https://api.hcgateway.shuchir.dev/api/sync/${recordType}`, {
-                userid: userid,
-                data: result
-              })
-            }), i*3000)
-          }
-          }
-          else {
-            setTimeout(() => axios.post(`https://api.hcgateway.shuchir.dev/api/sync/${recordType}`, {
-              userid: userid,
-              data: records
-            }), 3000)
-          }
-        })
-      })
-    })
-  })
-}
-
-ReactNativeForegroundService.add_task(() => sync(), {
-  delay: 7200000,
-  onLoop: true,
-  taskId: "hccloudsync",
-  onError: (e) => console.log(`Error logging:`, e),
-});
-
-ReactNativeForegroundService.start({
-  id: 1244,
-  title: "Sync Service",
-  message: "HCGateway is syncing Health Connect to the cloud.",
-  setOnlyAlertOnce: true,
-  color: "#000000",
-});
-
-let userLoggedIn = false;
-let session = null;
-let visible = false;
-let modalText = '';
-
-
-export default App = () => {
-  const [uname, setUname] = React.useState('');
-  const [passw, setPassw] = React.useState('');
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-
-  get("session").then((res) => {
-    if (res) userLoggedIn = true; session = res; forceUpdate()
-  })
-
-  const login = (uname, passw) => {
-    axios.post("https://api.hcgateway.shuchir.dev/api/login", {
-      username: uname,
-      password: passw
-    }).then(res => {
-      if ("sessid" in res.data) {
-        console.log(res.data.sessid)
-        AsyncStorage.setItem("session", res.data.sessid).then(() => {
-          userLoggedIn = true;
-          session = res.data.sessid;
-          forceUpdate();
-          askForPermission();
-        })
-      }
-      else {
-        modalText = res.data.error;
-        visibile = true;
-        forceUpdate();
-      }
-    })
-    .catch(err => {
-      console.log(err.response.data);
-      modalText = err.response.data.error;
-      visible = true;
-      forceUpdate()
+Toast.show({
+  type: 'info',
+  text1: "Loading API Base URL...",
+  autoHide: false
+})
+get('apiBase')
+.then(res => {
+  if (res) {
+    apiBase = res;
+    Toast.hide();
+    Toast.show({
+      type: "success",
+      text1: "API Base URL loaded",
     })
   }
+  else {
+    Toast.hide();
+    Toast.show({
+      type: "error",
+      text1: "API Base URL not found. Using default server.",
+    })
+  }
+})
 
-  
-  return (
-  <>
-    <ApplicationProvider {...eva} theme={eva.dark}>
-      <Layout style={styles.container}>
-      <Modal
-          visible={visible}
-          backdropStyle={styles.backdrop}
-          onBackdropPress={() => {visible = false; forceUpdate()}}
-        >
-          <Card disabled={true}>
-            <Text>
-              {modalText}
-            </Text>
-            <Button onPress={() => {visible = false; forceUpdate()}} style={styles.margin}>
-              DISMISS
-            </Button>
-          </Card>
-        </Modal>
+get('login')
+.then(res => {
+  if (res) {
+    login = res;
+  }
+})
 
-        {!userLoggedIn ? 
-          <Layout style={styles.container}>
-            <Text style={styles.text} category='h1'>Welcome to HCGateway</Text>
-            <Text style={styles.text}>Please login or signup for an account. If you don't have an account, it will be created for you.</Text>
-            <Input
-              placeholder='Enter a username'
-              value={uname}
-              onChangeText={nextValue => setUname(nextValue)}
-              style={styles.margin}
-            />
-            <Input
-              placeholder='Enter a password'
-              value={passw}
-              onChangeText={nextValue => setPassw(nextValue)}
-              style={styles.margin}
-            />
-             <Button onPress={() => login(uname, passw)} style={styles.margin}>
-              Login
-            </Button>
-          </Layout>
-          :
-          <Layout style={styles.container}>
-            <Text style={styles.text} category='h1'>Welcome to HCGateway</Text>
-            <Text>Your user ID is {session}. DO NOT share it with anyone.</Text>
-          </Layout>
-        }
-      </Layout>
-    </ApplicationProvider>
-  </>)
+get('lastSync')
+.then(res => {
+  if (res) {
+    lastSync = res;
+  }
+})
+
+
+const askForPermissions = async () => {
+  const isInitialized = await initialize();
+
+  const grantedPermissions = await requestPermission([
+    { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+    { accessType: 'read', recordType: 'BasalBodyTemperature' },
+    { accessType: 'read', recordType: 'BloodGlucose' },
+    { accessType: 'read', recordType: 'BloodPressure' },
+    { accessType: 'read', recordType: 'BasalMetabolicRate' },
+    { accessType: 'read', recordType: 'BodyFat' },
+    { accessType: 'read', recordType: 'BodyTemperature' },
+    { accessType: 'read', recordType: 'BoneMass' },
+    { accessType: 'read', recordType: 'CyclingPedalingCadence' },
+    { accessType: 'read', recordType: 'CervicalMucus' },
+    { accessType: 'read', recordType: 'ExerciseSession' },
+    { accessType: 'read', recordType: 'Distance' },
+    { accessType: 'read', recordType: 'ElevationGained' },
+    { accessType: 'read', recordType: 'FloorsClimbed' },
+    { accessType: 'read', recordType: 'HeartRate' },
+    { accessType: 'read', recordType: 'Height' },
+    { accessType: 'read', recordType: 'Hydration' },
+    { accessType: 'read', recordType: 'LeanBodyMass' },
+    { accessType: 'read', recordType: 'MenstruationFlow' },
+    { accessType: 'read', recordType: 'MenstruationPeriod' },
+    { accessType: 'read', recordType: 'Nutrition' },
+    { accessType: 'read', recordType: 'OvulationTest' },
+    { accessType: 'read', recordType: 'OxygenSaturation' },
+    { accessType: 'read', recordType: 'Power' },
+    { accessType: 'read', recordType: 'RespiratoryRate' },
+    { accessType: 'read', recordType: 'RestingHeartRate' },
+    { accessType: 'read', recordType: 'SleepSession' },
+    { accessType: 'read', recordType: 'Speed' },
+    { accessType: 'read', recordType: 'Steps' },
+    { accessType: 'read', recordType: 'StepsCadence' },
+    { accessType: 'read', recordType: 'TotalCaloriesBurned' },
+    { accessType: 'read', recordType: 'Vo2Max' },
+    { accessType: 'read', recordType: 'Weight' },
+    { accessType: 'read', recordType: 'WheelchairPushes' },
+  ]);
+
+  console.log(grantedPermissions);
+
+  if (grantedPermissions.length < 34) {
+    Toast.show({
+      type: 'error',
+      text1: "Permissions not granted",
+      text2: "Please visit settings to grant all permissions."
+    })
+  }
 };
+
+const sync = async () => {
+  const isInitialized = await initialize();
+  console.log("Syncing data...");
+  Toast.show({
+    type: 'info',
+    text1: "Syncing data...",
+  })
+  await setPlain('lastSync', new Date().toISOString());
+  lastSync = new Date().toISOString();
+
+  let recordTypes = ["ActiveCaloriesBurned", "BasalBodyTemperature", "BloodGlucose", "BloodPressure", "BasalMetabolicRate", "BodyFat", "BodyTemperature", "BoneMass", "CyclingPedalingCadence", "CervicalMucus", "ExerciseSession", "Distance", "ElevationGained", "FloorsClimbed", "HeartRate", "Height", "Hydration", "LeanBodyMass", "MenstruationFlow", "MenstruationPeriod", "Nutrition", "OvulationTest", "OxygenSaturation", "Power", "RespiratoryRate", "RestingHeartRate", "SleepSession", "Speed", "Steps", "StepsCadence", "TotalCaloriesBurned", "Vo2Max", "Weight", "WheelchairPushes"]; 
+  
+  for (let i = 0; i < recordTypes.length; i++) {
+      let records = await readRecords(recordTypes[i],
+        {
+          timeRangeFilter: {
+            operator: "between",
+            startTime: String(new Date(new Date().setDate(new Date().getDate() - 29)).toISOString()),
+            endTime: String(new Date().toISOString())
+          }
+        }
+      );
+      console.log(recordTypes[i]);
+
+      if (['SleepSession', 'Speed', 'HeartRate'].includes(recordTypes[i])) {
+        console.log("INSIDE IF - ", recordTypes[i])
+        for (let j=0; j<records.length; j++) {
+          console.log("INSIDE FOR", j, recordTypes[i])
+          setTimeout(async () => {
+            try {
+              let record = await readRecord(recordTypes[i], records[j].metadata.id);
+              await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
+                userid: login,
+                data: record
+              })
+            }
+            catch (err) {
+              console.log(err)
+            }
+          }, j*3000)
+        }
+      }
+
+      // else {
+      //   await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
+      //     userid: login,
+      //     data: records
+      //   })
+      // }
+  }
+}
+  
+
+export default function App() {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  const [form, setForm] = React.useState(null);
+
+  const loginFunc = async () => {
+    Toast.show({
+      type: 'info',
+      text1: "Logging in...",
+      autoHide: false
+    })
+
+    try {
+    let response = await axios.post(`${apiBase}/api/login`, form);
+    if ('sessid' in response.data) {
+      console.log(response.data.sessid);
+      setPlain('login', response.data.sessid).then(() => {
+        login = response.data.sessid;
+        forceUpdate();
+        Toast.hide();
+        Toast.show({
+          type: 'success',
+          text1: "Logged in successfully",
+        })
+        askForPermissions();
+      })
+    }
+    else {
+      Toast.hide();
+      Toast.show({
+        type: 'error',
+        text1: "Login failed",
+        text2: response.data.error
+      })
+    }
+    }
+
+    catch (err) {
+      Toast.hide();
+      Toast.show({
+        type: 'error',
+        text1: "Login failed",
+        text2: "Your credentials may be incorrect. Please try again."
+      })
+    }
+  }
+
+  React.useEffect(() => {
+    requestNotifications(['alert']).then(({status, settings}) => {
+      console.log(status, settings)
+    });
+
+    get('login')
+    .then(res => {
+      if (res) {
+        login = res;
+        get('taskDelay')
+        .then(res => {
+          if (res) taskDelay = Number(res);
+          ReactNativeForegroundService.add_task(() => sync(), {
+            delay: taskDelay,
+            onLoop: true,
+            taskId: 'hcgateway_sync',
+            onError: e => console.log(`Error logging:`, e),
+          });
+        })
+        forceUpdate()
+      }
+    })
+  }, [login])
+
+
+  const startTask = () => {
+    ReactNativeForegroundService.start({
+      id: 1244,
+      title: 'HCGateway Sync Service',
+      message: 'HCGateway is working in the background to sync your data.',
+      icon: 'ic_launcher',
+      setOnlyAlertOnce: true,
+      color: '#000000',
+    }).then(() => console.log('Foreground service started'));
+  };
+
+  const stopTask = () => {
+    ReactNativeForegroundService.stopAll();
+  };
+
+  return (
+    <View style={styles.container}>
+      {login &&
+        <View>
+          <Text style={{ fontSize: 20, marginVertical: 10 }}>Your User ID is {login}. Do NOT share this with anyone.</Text>
+          <Text style={{ fontSize: 17, marginVertical: 10 }}>Last Sync: {lastSync}</Text>
+
+          <Text style={{ marginTop: 10, fontSize: 15 }}>API Base URL:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="API Base URL"
+            defaultValue={apiBase}
+            onChangeText={text => {
+              apiBase = text;
+              setPlain('apiBase', text);
+            }}
+          />
+
+          <Text style={{ marginTop: 10, fontSize: 15 }}>Sync Interval (in seconds) (defualt is 2 hours):</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Sync Interval"
+            keyboardType='numeric'
+            defaultValue={(taskDelay / 1000).toString()}
+            onChangeText={text => {
+              taskDelay = Number(text) * 1000;
+              setPlain('taskDelay', String(text * 1000));
+              ReactNativeForegroundService.update_task(() => sync(), {
+                delay: taskDelay,
+              })
+              Toast.show({
+                type: 'success',
+                text1: "Sync interval updated",
+              })
+            }}
+          />
+
+          <View style={{ marginTop: 20 }}>
+            <Button
+              title="Sync Now"
+              onPress={() => {
+                sync()
+              }}
+            />
+          </View>
+
+          <View
+          style={{ 
+            marginTop: 20,
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            width: '100%'
+           }}
+          >
+            <Button
+              title="Start Sync Service"
+              onPress={() => {
+                startTask()
+                Toast.show({
+                  type: 'success',
+                  text1: "Sync service started",
+                })
+              }}
+            />
+            <Button
+              title="Stop Sync Service"
+              onPress={() => {
+                stopTask();
+                Toast.show({
+                  type: 'success',
+                  text1: "Sync service stopped",
+                })
+              }}
+            />
+          </View>
+
+          <View style={{ marginTop: 100 }}>
+            <Button
+              title="Logout"
+              onPress={() => {
+                delkey('login');
+                login = null;
+                Toast.show({
+                  type: 'success',
+                  text1: "Logged out successfully",
+                })
+                forceUpdate();
+              }}
+            />
+          </View>
+        </View>
+      }
+      {!login &&
+        <View>
+          <Text style={{ 
+            fontSize: 30,
+            fontWeight: 'bold',
+            textAlign: 'center',
+           }}>Login</Text>
+
+           <Text style={{ marginVertical: 10 }}>If you don't have an account, one will be made for you when logging in.</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            onChangeText={text => setForm({ ...form, username: text })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            secureTextEntry={true}
+            onChangeText={text => setForm({ ...form, password: text })}
+          />
+          <Text style={{ marginVertical: 10 }}>API Base URL:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="API Base URL"
+            defaultValue={apiBase}
+            onChangeText={text => {
+              apiBase = text;
+              setPlain('apiBase', text);
+            }}
+          />
+
+          <Button
+            title="Login"
+            onPress={() => {
+              loginFunc()
+            }}
+          />
+        </View>
+      }
+
+    <Toast />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
     alignItems: 'center',
-    minHeight: 192,
-    paddingHorizontal: 16,
+    justifyContent: 'center',
+    height: '100%',
+    width: '100%',
+    textAlign: "center",
+    padding: 50
   },
-  text: {
-    textAlign: 'center',
-    marginVertical: 16,
+
+  input: {
+    height: 50,
+    marginVertical: 7,
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 10,
+    width: 350,
+    fontSize: 17
   },
-  margin: {
-    marginVertical: 4,
-  },
-  backdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
+
 });

@@ -1,4 +1,79 @@
 {
-  "name": "HCGateway",
-  "displayName": "HCGateway"
+  "expo": {
+    "name": "HCGateway",
+    "slug": "hcgateway",
+    "version": "0.1.0",
+    "plugins": [
+      "expo-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 26
+          }
+        }
+      ]
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "dev.shuchir.hcgateway",
+      "permissions": [
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_BASAL_BODY_TEMPERATURE",
+        "android.permission.health.READ_BASAL_METABOLIC_RATE",
+        "android.permission.health.READ_BLOOD_GLUCOSE",
+        "android.permission.health.READ_BLOOD_PRESSURE",
+        "android.permission.health.READ_BODY_FAT",
+        "android.permission.health.READ_BODY_TEMPERATURE",
+        "android.permission.health.READ_BONE_MASS",
+        "android.permission.health.READ_CERVICAL_MUCUS",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.READ_ELEVATION_GAINED",
+        "android.permission.health.READ_FLOORS_CLIMBED",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_HEART_RATE_VARIABILITY",
+        "android.permission.health.READ_HEIGHT",
+        "android.permission.health.READ_HYDRATION",
+        "android.permission.health.READ_INTERMENSTRUAL_BLEEDING",
+        "android.permission.health.READ_LEAN_BODY_MASS",
+        "android.permission.health.READ_MENSTRUATION",
+        "android.permission.health.READ_NUTRITION",
+        "android.permission.health.READ_OVULATION_TEST",
+        "android.permission.health.READ_OXYGEN_SATURATION",
+        "android.permission.health.READ_POWER",
+        "android.permission.health.READ_RESPIRATORY_RATE",
+        "android.permission.health.READ_RESTING_HEART_RATE",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_SPEED",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.READ_VO2_MAX",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_WHEELCHAIR_PUSHES",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5793ca9f-ccf9-4d23-a9a6-8e6781f945e5"
+      }
+    }
+  }
 }

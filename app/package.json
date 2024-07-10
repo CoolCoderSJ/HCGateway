@@ -1,42 +1,30 @@
 {
-  "name": "hcgateway",
-  "version": "0.0.1",
-  "private": true,
+  "name": "app",
+  "version": "1.0.0",
+  "main": "expo/AppEntry.js",
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "start": "react-native start",
-    "test": "jest",
-    "lint": "eslint ."
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
   },
   "dependencies": {
-    "@eva-design/eva": "^2.2.0",
-    "@react-native-async-storage/async-storage": "^1.19.2",
-    "@supersami/rn-foreground-service": "^2.1.0",
-    "@ui-kitten/components": "5.3.1",
-    "@ui-kitten/eva-icons": "5.3.1",
-    "@ui-kitten/metro-config": "5.3.1",
-    "axios": "^1.4.0",
-    "react": "18.1.0",
-    "react-native": "0.70.6",
-    "react-native-background-timer": "^2.4.1",
-    "react-native-eject": "^0.2.0",
-    "react-native-gradle-plugin": "^0.71.19",
-    "react-native-health-connect": "^1.2.0",
-    "react-native-svg": "^12.1.1"
+    "@react-native-async-storage/async-storage": "^1.23.1",
+    "@supersami/rn-foreground-service": "^2.1.1",
+    "axios": "^1.7.2",
+    "expo": "~51.0.18",
+    "expo-build-properties": "^0.12.3",
+    "expo-health-connect": "^0.1.0",
+    "expo-status-bar": "~1.12.1",
+    "expo-system-ui": "^3.0.7",
+    "react": "18.2.0",
+    "react-native": "0.74.3",
+    "react-native-health-connect": "^2.1.0",
+    "react-native-permissions": "^4.1.5",
+    "react-native-toast-message": "^2.2.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.9",
-    "@babel/runtime": "^7.12.5",
-    "@react-native-community/eslint-config": "^2.0.0",
-    "babel-jest": "^26.6.3",
-    "eslint": "^7.32.0",
-    "jest": "^26.6.3",
-    "metro-react-native-babel-preset": "0.72.3",
-    "react-native-rename": "^3.2.13",
-    "react-test-renderer": "18.1.0"
+    "@babel/core": "^7.20.0"
   },
-  "jest": {
-    "preset": "react-native"
-  }
+  "private": true
 }
