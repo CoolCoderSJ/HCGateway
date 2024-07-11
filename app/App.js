@@ -117,6 +117,8 @@ const askForPermissions = async () => {
 const sync = async () => {
   const isInitialized = await initialize();
   console.log("Syncing data...");
+  let numRecords = 0;
+  let numRecordsSynced = 0;
   Toast.show({
     type: 'info',
     text1: "Syncing data...",
@@ -137,6 +139,7 @@ const sync = async () => {
         }
       );
       console.log(recordTypes[i]);
+      numRecords += records.length;
 
       if (['SleepSession', 'Speed', 'HeartRate'].includes(recordTypes[i])) {
         console.log("INSIDE IF - ", recordTypes[i])
@@ -153,16 +156,49 @@ const sync = async () => {
             catch (err) {
               console.log(err)
             }
+
+            numRecordsSynced += 1;
+            try {
+            ReactNativeForegroundService.update({
+              id: 1244,
+              title: 'HCGateway Sync Progress',
+              message: `HCGateway is currently syncing... [${numRecordsSynced}/${numRecords}]`,
+              icon: 'ic_launcher',
+              setOnlyAlertOnce: true,
+              color: '#000000',
+              progress: {
+                max: numRecords,
+                curr: numRecordsSynced,
+              }
+            })
+            }
+            catch {}
           }, j*3000)
         }
       }
 
-      // else {
-      //   await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
-      //     userid: login,
-      //     data: records
-      //   })
-      // }
+      else {
+        await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
+          userid: login,
+          data: records
+        });
+        numRecordsSynced += records.length;
+        try {
+        ReactNativeForegroundService.update({
+          id: 1244,
+          title: 'HCGateway Sync Progress',
+          message: `HCGateway is currently syncing... [${numRecordsSynced}/${numRecords}]`,
+          icon: 'ic_launcher',
+          setOnlyAlertOnce: true,
+          color: '#000000',
+          progress: {
+            max: numRecords,
+            curr: numRecordsSynced,
+          }
+        })
+        }
+        catch {}
+      }
   }
 }
   
