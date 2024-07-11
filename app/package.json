@@ -17,6 +17,8 @@
     "expo-health-connect": "^0.1.0",
     "expo-status-bar": "~1.12.1",
     "expo-system-ui": "^3.0.7",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "react": "18.2.0",
     "react-native": "0.74.3",
     "react-native-health-connect": "^2.1.0",

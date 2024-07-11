@@ -11,6 +11,7 @@ import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import ReactNativeForegroundService from '@supersami/rn-foreground-service';
 import {requestNotifications} from 'react-native-permissions';
+ReactNativeForegroundService.register();
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -224,13 +225,13 @@ export default function App() {
         get('taskDelay')
         .then(res => {
           if (res) taskDelay = Number(res);
-          ReactNativeForegroundService.add_task(() => sync(), {
-            delay: taskDelay,
-            onLoop: true,
-            taskId: 'hcgateway_sync',
-            onError: e => console.log(`Error logging:`, e),
-          });
         })
+        ReactNativeForegroundService.add_task(() => sync(), {
+          delay: taskDelay,
+          onLoop: true,
+          taskId: 'hcgateway_sync',
+          onError: e => console.log(`Error logging:`, e),
+        });
         forceUpdate()
       }
     })
@@ -320,6 +321,12 @@ export default function App() {
               title="Stop Sync Service"
               onPress={() => {
                 stopTask();
+                ReactNativeForegroundService.add_task(() => sync(), {
+                  delay: taskDelay,
+                  onLoop: true,
+                  taskId: 'hcgateway_sync',
+                  onError: e => console.log(`Error logging:`, e),
+                });
                 Toast.show({
                   type: 'success',
                   text1: "Sync service stopped",

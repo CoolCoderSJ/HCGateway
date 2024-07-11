@@ -1,0 +1,13 @@
+diff --git a/node_modules/@supersami/rn-foreground-service/android/src/main/java/com/supersami/foregroundservice/ForegroundService.java b/node_modules/@supersami/rn-foreground-service/android/src/main/java/com/supersami/foregroundservice/ForegroundService.java
+index 31a2bd8..f8b2337 100644
+--- a/node_modules/@supersami/rn-foreground-service/android/src/main/java/com/supersami/foregroundservice/ForegroundService.java
++++ b/node_modules/@supersami/rn-foreground-service/android/src/main/java/com/supersami/foregroundservice/ForegroundService.java
+@@ -79,7 +79,7 @@ public class ForegroundService extends Service {
+                 .getInstance(getApplicationContext())
+                 .buildNotification(getApplicationContext(), notificationConfig);
+ 
+-            startForeground(id, notification);
++            startForeground(id, notification, 1);
+ 
+             running += 1;
+ 

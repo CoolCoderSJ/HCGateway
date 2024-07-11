@@ -4,6 +4,7 @@
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
   <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
   <uses-permission android:name="android.permission.health.READ_BASAL_BODY_TEMPERATURE"/>
@@ -61,8 +62,8 @@
     android:name="com.supersami.foregroundservice.notification_color"
     android:resource="@color/blue"
   />
-  <service android:name="com.supersami.foregroundservice.ForegroundService"></service>
-  <service android:name="com.supersami.foregroundservice.ForegroundServiceTask"></service>
+  <service android:name="com.supersami.foregroundservice.ForegroundService" android:foregroundServiceType="dataSync"></service>
+  <service android:name="com.supersami.foregroundservice.ForegroundServiceTask" android:foregroundServiceType="dataSync"></service>
 
 
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
