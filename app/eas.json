@@ -5,6 +5,12 @@
           "buildType": "apk"
         }
       },
+      "dev": {
+	"android": {
+	  "developmentClient": true,
+          "buildType": "apk"
+	}
+      },
       "preview2": {
         "android": {
           "gradleCommand": ":app:assembleRelease"
