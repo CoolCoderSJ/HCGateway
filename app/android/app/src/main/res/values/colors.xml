@@ -1,12 +1,11 @@
-
-  <resources>
-    <item  name="blue"  type="color">#00C4D1
+<resources>
+  <item name="blue" type="color">#00C4D1&#xD;
     </item>
-    <integer-array  name="androidcolors">
+  <integer-array name="androidcolors">
     <item>@color/blue</item>
-    </integer-array>
-
-    <color name="colorPrimary">#00C4D1</color>
-    <color name="iconBackground">#00C4D1</color>
-    <color name="splashscreen_background">#FFFFFF</color>
-  </resources>
+  </integer-array>
+  <color name="colorPrimary">#023c69</color>
+  <color name="iconBackground">#ffffff</color>
+  <color name="splashscreen_background">#ffffff</color>
+  <color name="colorPrimaryDark">#ffffff</color>
+</resources>

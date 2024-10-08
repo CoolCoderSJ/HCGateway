@@ -1,11 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
   <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
-
   <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
   <uses-permission android:name="android.permission.health.READ_BASAL_BODY_TEMPERATURE"/>
   <uses-permission android:name="android.permission.health.READ_BASAL_METABOLIC_RATE"/>
@@ -16,8 +16,8 @@
   <uses-permission android:name="android.permission.health.READ_BONE_MASS"/>
   <uses-permission android:name="android.permission.health.READ_CERVICAL_MUCUS"/>
   <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
-  <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
   <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED"/>
+  <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
   <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED"/>
   <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
   <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY"/>
@@ -39,9 +39,6 @@
   <uses-permission android:name="android.permission.health.READ_VO2_MAX"/>
   <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
   <uses-permission android:name="android.permission.health.READ_WHEELCHAIR_PUSHES"/>
-
-  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -50,26 +47,14 @@
     </intent>
   </queries>
   <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme">
-  <meta-data
-    android:name="com.supersami.foregroundservice.notification_channel_name"
-    android:value="Sticky Title"
-  />
-  <meta-data
-    android:name="com.supersami.foregroundservice.notification_channel_description"
-    android:value="Sticky Description."
-  />
-  <meta-data
-    android:name="com.supersami.foregroundservice.notification_color"
-    android:resource="@color/blue"
-  />
-  <service android:name="com.supersami.foregroundservice.ForegroundService" android:foregroundServiceType="dataSync"></service>
-  <service android:name="com.supersami.foregroundservice.ForegroundServiceTask" android:foregroundServiceType="dataSync"></service>
-
-
+    <meta-data android:name="com.supersami.foregroundservice.notification_channel_description" android:value="Sticky Description."/>
+    <meta-data android:name="com.supersami.foregroundservice.notification_channel_name" android:value="Sticky Title"/>
+    <meta-data android:name="com.supersami.foregroundservice.notification_color" android:resource="@color/blue"/>
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
-
+    <service android:name="com.supersami.foregroundservice.ForegroundService" android:foregroundServiceType="dataSync"/>
+    <service android:name="com.supersami.foregroundservice.ForegroundServiceTask" android:foregroundServiceType="dataSync"/>
     <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
@@ -80,36 +65,20 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="dev.shuchir.hcgateway"/>
+        <data android:scheme="exp+hcgateway"/>
       </intent-filter>
       <intent-filter>
         <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
       </intent-filter>
       <intent-filter>
-        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
       </intent-filter>
     </activity>
-
-    <activity
-      android:name=".PermissionsRationaleActivity"
-      android:exported="true">
+    <activity android:name=".PermissionsRationaleActivity" android:exported="true">
       <intent-filter>
-        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
       </intent-filter>
     </activity>
-
-    <!-- For versions starting Android 14, create an activity alias to show the rationale
-         of Health Connect permissions once users click the privacy policy link. -->
-    <activity-alias
-      android:name="ViewPermissionUsageActivity"
-      android:exported="true"
-      android:targetActivity=".MainActivity"
-      android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
-        <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
-      </intent-filter>
-    </activity-alias>
-
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>
     <activity-alias android:name="ViewPermissionUsageActivity" android:exported="true" android:targetActivity=".MainActivity" android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
       <intent-filter>
@@ -117,5 +86,15 @@
         <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
       </intent-filter>
     </activity-alias>
+    <activity-alias android:name="ViewPermissionUsageActivity" android:exported="true" android:targetActivity=".MainActivity" android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+        <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+      </intent-filter>
+    </activity-alias>
+
+      <meta-data android:name="io.sentry.dsn" android:value="https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6" />
+      <meta-data android:name="io.sentry.traces.sample-rate" android:value="1.0" />
+      <meta-data android:name="io.sentry.traces.profiling.sample-rate" android:value="1.0" />
   </application>
 </manifest>

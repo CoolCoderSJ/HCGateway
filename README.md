@@ -152,8 +152,20 @@ You can self host the server and database. To do this, follow the steps below:
 - run `pip install -r requirements.txt`
 - rename `.env.example` to `.env` and fill in the values
 - run `python3 main.py` to start the server
+
+To run the mobile application:
 - in another window/tab, `cd` into the app/ folder
 - run `npm install`
+- If you wish to remove sentry:
+```
+yarn remove @sentry/react-native
+npx @sentry/wizard -i reactNative -p android --uninstall
+```
+- If you wish to change sentry to your own instance:
+    - Change the `dsn` in `App.js` to your own DSN
+    - Change the server, org name, and project name in app.json
+    - Change these details again in android/sentry.properties
+    - Change the DSN in the AndroidManifest.xml
 - run `npx patch-package` to apply a patch to the foreground service library
 - run `npm run android` to start the application, or follow the instructions at https://medium.com/geekculture/react-native-generate-apk-debug-and-release-apk-4e9981a2ea51 to build an APK file.
     - It is also possible to now use eas build to build the APK file. You can find more at https://docs.expo.dev/build/eas-build/ **NOTE: This must be a local build, since you need to run patch-package before building the APK file.**

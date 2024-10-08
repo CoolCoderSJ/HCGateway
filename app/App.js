@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, Button } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, Switch } from 'react-native';
 import React from 'react';
 import {
   initialize,
@@ -11,13 +11,42 @@ import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import ReactNativeForegroundService from '@supersami/rn-foreground-service';
 import {requestNotifications} from 'react-native-permissions';
-ReactNativeForegroundService.register();
+import * as Sentry from '@sentry/react-native';
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
+
+let isSentryEnabled = true;
+get('sentryEnabled')
+  .then(res => {
+    if (res != "false") {
+      Sentry.init({
+        dsn: 'https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6',
+        // enableSpotlight: __DEV__,
+      });
+      Toast.show({
+        type: 'success',
+        text1: "Sentry enabled from settings",
+      });
+    } else {
+      isSentryEnabled = false;
+      Toast.show({
+        type: 'info',
+        text1: "Sentry is disabled",
+      });
+    }
+  })
+  .catch(err => {
+    console.log(err);
+    Toast.show({
+      type: 'error',
+      text1: "Failed to check Sentry settings",
+    });
+  });
+ReactNativeForegroundService.register();
 
 let login;
 let apiBase = 'https://api.hcgateway.shuchir.dev';
@@ -326,6 +355,35 @@ export default function App() {
             }}
           />
 
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+            <Text style={{ fontSize: 15 }}>Enable Sentry:</Text>
+            <Switch
+              value={isSentryEnabled}
+              onValueChange={async (value) => {
+              if (value) {
+                Sentry.init({
+                dsn: 'https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6',
+                });
+                Toast.show({
+                type: 'success',
+                text1: "Sentry enabled",
+                });
+                isSentryEnabled = true;
+                forceUpdate();
+              } else {
+                Sentry.close();
+                Toast.show({
+                type: 'success',
+                text1: "Sentry disabled",
+                });
+                isSentryEnabled = false;
+                forceUpdate();
+              }
+              await setPlain('sentryEnabled', value.toString());
+              }}
+            />
+            </View>
+
           <View style={{ marginTop: 20 }}>
             <Button
               title="Sync Now"
@@ -419,6 +477,36 @@ export default function App() {
             }}
           />
 
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+            <Text style={{ fontSize: 15 }}>Enable Sentry:</Text>
+            <Switch
+              value={isSentryEnabled}
+              defaultValue={isSentryEnabled}
+              onValueChange={async (value) => {
+                if (value) {
+                  Sentry.init({
+                    dsn: 'https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6',
+                  });
+                  Toast.show({
+                    type: 'success',
+                    text1: "Sentry enabled",
+                  });
+                  isSentryEnabled = true;
+                  forceUpdate();
+                } else {
+                  Sentry.close();
+                  Toast.show({
+                    type: 'success',
+                    text1: "Sentry disabled",
+                  });
+                  isSentryEnabled = false;
+                  forceUpdate();
+                }
+                await setPlain('sentryEnabled', value.toString());
+              }} 
+            />
+          </View>
+
           <Button
             title="Login"
             onPress={() => {
@@ -431,7 +519,7 @@ export default function App() {
     <Toast />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
