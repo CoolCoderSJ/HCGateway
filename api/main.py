@@ -1,8 +1,16 @@
+import sentry_sdk
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 import os, json, requests
 from dotenv import load_dotenv
 load_dotenv()
+
+try:
+    sentry_sdk.init(
+        dsn=os.environ['SENTRY_DSN'],
+        traces_sample_rate=1.0,
+    )
+except: pass
 
 from appwrite.client import Client
 from appwrite.services.databases import Databases
@@ -39,7 +47,7 @@ def get_all_docs(data, collection, queries=[]):
         querylength = len(queries)
         while True:
             if docs:
-                queries.append(Query.cursorAfter(docs[-1]['$id']))
+                queries.append(Query.cursor_after(docs[-1]['$id']))
             try:
                 results = db.list_documents(data, collection, queries=queries)
             except: return docs
@@ -78,6 +86,7 @@ def login():
 
 @app.route("/api/sync/<method>", methods=['POST'])
 def sync(method):
+    print(request.json)
     method = method[0].lower() + method[1:]
     if not "userid" in request.json:
         return jsonify({'error': 'no user id provided'}), 400
@@ -87,6 +96,7 @@ def sync(method):
         return jsonify({'error': 'no data provided'}), 400
     
     userid = request.json['userid']
+    print(userid)
     user = users.get(userid)
     hashed_password = user['password']
     key = base64.urlsafe_b64encode(hashed_password.encode("utf-8").ljust(32)[:32])
@@ -97,7 +107,7 @@ def sync(method):
         data = [data]
     print(method, len(data))
 
-    try: 
+    try:
         dbid = db.get(userid)['$id']
     except:
         try:
@@ -127,7 +137,6 @@ def sync(method):
         itemid = item['metadata']['id']
         dataObj = {}
         for k, v in item.items():
-            print("iterating through items")
             if k != "metadata" and k != "time" and k != "startTime" and k != "endTime":
                 dataObj[k] = v
 
