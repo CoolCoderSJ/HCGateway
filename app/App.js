@@ -12,6 +12,7 @@ import axios from 'axios';
 import ReactNativeForegroundService from '@supersami/rn-foreground-service';
 import {requestNotifications} from 'react-native-permissions';
 import * as Sentry from '@sentry/react-native';
+import messaging from '@react-native-firebase/messaging';
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -47,6 +48,26 @@ get('sentryEnabled')
     });
   });
 ReactNativeForegroundService.register();
+
+const requestUserPermission = async () => {
+  try {
+    await messaging().requestPermission();
+    const token = await messaging().getToken();
+    console.log('Device Token:', token);
+  } catch (error) {
+    console.log('Permission or Token retrieval error:', error);
+  }
+};
+
+requestUserPermission();
+
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log('Background message handled:', remoteMessage);
+});
+
+messaging().onMessage(remoteMessage => {
+  console.log('Foreground message:', remoteMessage);
+});
 
 let login;
 let apiBase = 'https://api.hcgateway.shuchir.dev';

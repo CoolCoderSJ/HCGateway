@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
   <uses-permission android:name="android.permission.INTERNET"/>
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -53,6 +53,9 @@
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
+    <meta-data android:name="io.sentry.dsn" android:value="https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6"/>
+    <meta-data android:name="io.sentry.traces.profiling.sample-rate" android:value="1.0"/>
+    <meta-data android:name="io.sentry.traces.sample-rate" android:value="1.0"/>
     <service android:name="com.supersami.foregroundservice.ForegroundService" android:foregroundServiceType="dataSync"/>
     <service android:name="com.supersami.foregroundservice.ForegroundServiceTask" android:foregroundServiceType="dataSync"/>
     <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
@@ -92,9 +95,5 @@
         <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
       </intent-filter>
     </activity-alias>
-
-      <meta-data android:name="io.sentry.dsn" android:value="https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6" />
-      <meta-data android:name="io.sentry.traces.sample-rate" android:value="1.0" />
-      <meta-data android:name="io.sentry.traces.profiling.sample-rate" android:value="1.0" />
   </application>
 </manifest>

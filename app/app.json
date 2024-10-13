@@ -22,7 +22,9 @@
           "project": "hcgateway-app",
           "organization": "sentry"
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -37,6 +39,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile": "./firebase/google-services.json",
       "package": "dev.shuchir.hcgateway",
       "permissions": [
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
