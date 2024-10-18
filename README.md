@@ -173,8 +173,8 @@ npx @sentry/wizard -i reactNative -p android --uninstall
 ---
 ## Running with Docker
 
- Running via docker is a fabulous way to ensure that you dont run into env issues also, if you are a self-hoster kindly note that,when running via docker, you may need to run things in a bridge mode -
-
+ Running via docker is a great way to ensure that you dont run into env issues.
+ 
 To run the HCGateway API using Docker, follow these steps:
 
 1. **Prerequisites**\
@@ -183,7 +183,7 @@ To run the HCGateway API using Docker, follow these steps:
 2. **Setting up Environment Variables**
 
    - You’ll need to configure environment variables before starting the services.
-   - Create a `.env` file inside the `api/` directory, containing necessary configuration like `APP_ENV`.
+   - Copy the provided `.env.example` file to `.env` inside the `api/` directory and configure it as necessary.
 
 3. **Running the Container (without Docker Compose)**\
     You can run the container directly using the `docker run` command if you prefer not to use Docker Compose:
@@ -191,8 +191,7 @@ To run the HCGateway API using Docker, follow these steps:
    ```bash
    docker run -itd \
      -p 6644:6644 \
-     --network bridge \
-     --name hcapi \
+     --name hcgateway_api \
      --env-file ./api/.env \
      docker.io/library/hcgateway_api:latest
    ```
@@ -203,28 +202,28 @@ To run the HCGateway API using Docker, follow these steps:
    ```bash
    docker-compose --env-file ./api/.env up --build
    ```
+   A community-maintained image is also provided. To use this image instead, run
+   ```bash
+   docker-compose --env-file ./api/.env up -d
+   ```
 
-5. **Port Configuration**\
+6. **Port Configuration**\
     The API is exposed on port `6644`. You can access the API at:
 
    ```
    http://localhost:6644
    ```
-
-6. **Network Configuration**\
-    The API service is connected to a custom Docker bridge network (`custom_bridge`), allowing communication with other containers and services that might be part of this project.
-
+   
 7. **Container Management**
 
    - The container will automatically restart on failures due to the `restart: always` policy.
-
-   - To stop the containers, use:
+   - To stop the container, use:
 
      ```bash
      docker-compose down
      ```
 
-8. **Additional Notes**
+9. **Additional Notes**
 
    - The Dockerfile uses a Python 3.13 slim image as the base, with all necessary dependencies installed via `requirements.txt`.
    - If any changes are made to the `Dockerfile` or dependencies, rerun the command with the `--build` flag to rebuild the images.
