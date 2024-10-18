@@ -10,11 +10,5 @@ services:
       - "6644:6644"  # Map port 6644 on the host to 6644 in the container
     environment:
       - APP_ENV=${APP_ENV}  # Pass environment variables from .env
-    networks:
-      - custom_bridge  # Connect to a custom bridge network
-    container_name: hcapi  # Assign a name to the container
+    container_name: hcgateway_api  # Assign a name to the container
     restart: always  # Automatically restart the container if it crashes
-
-networks:
-  custom_bridge:
-    driver: bridge  # Use the bridge driver to create an isolated network
