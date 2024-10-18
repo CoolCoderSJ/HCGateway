@@ -2,16 +2,19 @@ version: '3.8'
 
 services:
   api:
-    image: docker.io/library/hcgateway_api:latest 
+    build:
+      context: ./api  # Specify the build context (the directory containing your Dockerfile)
+      dockerfile: Dockerfile  # Path to the Dockerfile, optional if it’s named 'Dockerfile'
+    image: docker.io/library/hcgateway_api:latest  # Optionally tag the built image
     ports:
-      - "6644:6644"  
+      - "6644:6644"  # Map port 6644 on the host to 6644 in the container
     environment:
-      - APP_ENV=${APP_ENV}  
+      - APP_ENV=${APP_ENV}  # Pass environment variables from .env
     networks:
-      - custom_bridge  
-    container_name: hcapi  
-    restart: always  
+      - custom_bridge  # Connect to a custom bridge network
+    container_name: hcapi  # Assign a name to the container
+    restart: always  # Automatically restart the container if it crashes
 
 networks:
   custom_bridge:
-    driver: bridge
+    driver: bridge  # Use the bridge driver to create an isolated network
