@@ -197,4 +197,4 @@ def fetch(method):
         doc['data'] = json.loads(fernet.decrypt(doc['data'].encode()).decode())
     return jsonify(docs), 200
 
-app.run(host=os.environ.get('APP_HOST', '0.0.0.0'), port=int(os.environ.get('APP_PORT')), debug=bool(os.environ.get('APP_DEBUG', False)))
+app.run(host=os.environ.get('APP_HOST', '0.0.0.0'), port=int(os.environ.get('APP_PORT', 6644)), debug=bool(os.environ.get('APP_DEBUG', False)))
