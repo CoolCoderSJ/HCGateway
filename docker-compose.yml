@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  api:
+    image: docker.io/library/hcgateway_api:latest 
+    ports:
+      - "6644:6644"  
+    environment:
+      - APP_ENV=${APP_ENV}  
+    networks:
+      - custom_bridge  
+    container_name: hcapi  
+    restart: always  
+
+networks:
+  custom_bridge:
+    driver: bridge
