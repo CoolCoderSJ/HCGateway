@@ -159,7 +159,9 @@ const sync = async () => {
   let recordTypes = ["ActiveCaloriesBurned", "BasalBodyTemperature", "BloodGlucose", "BloodPressure", "BasalMetabolicRate", "BodyFat", "BodyTemperature", "BoneMass", "CyclingPedalingCadence", "CervicalMucus", "ExerciseSession", "Distance", "ElevationGained", "FloorsClimbed", "HeartRate", "Height", "Hydration", "LeanBodyMass", "MenstruationFlow", "MenstruationPeriod", "Nutrition", "OvulationTest", "OxygenSaturation", "Power", "RespiratoryRate", "RestingHeartRate", "SleepSession", "Speed", "Steps", "StepsCadence", "TotalCaloriesBurned", "Vo2Max", "Weight", "WheelchairPushes"]; 
   
   for (let i = 0; i < recordTypes.length; i++) {
-      let records = await readRecords(recordTypes[i],
+      let records;
+      try {
+      records = await readRecords(recordTypes[i],
         {
           timeRangeFilter: {
             operator: "between",
@@ -168,6 +170,11 @@ const sync = async () => {
           }
         }
       );
+      }
+      catch (err) {
+        console.log(err)
+        continue;
+      }
       console.log(recordTypes[i]);
       numRecords += records.length;
 
