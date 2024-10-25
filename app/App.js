@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, TextInput, Button, Switch } from 'react-native';
 import React from 'react';
+import { StatusBar } from 'expo-status-bar';
 import {
   initialize,
   requestPermission,
@@ -516,6 +517,7 @@ export default function App() {
         </View>
       }
 
+    <StatusBar style="dark" />
     <Toast />
     </View>
   );
