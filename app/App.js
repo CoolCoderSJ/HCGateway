@@ -208,6 +208,17 @@ const sync = async () => {
                 curr: numRecordsSynced,
               }
             })
+
+            if (numRecordsSynced == numRecords) {
+              ReactNativeForegroundService.update({
+                id: 1244,
+                title: 'HCGateway Sync Progress',
+                message: `HCGateway is working in the background to sync your data.`,
+                icon: 'ic_launcher',
+                setOnlyAlertOnce: true,
+                color: '#000000',
+              })
+            }
             }
             catch {}
           }, j*3000)
@@ -233,6 +244,17 @@ const sync = async () => {
             curr: numRecordsSynced,
           }
         })
+
+        if (numRecordsSynced == numRecords) {
+          ReactNativeForegroundService.update({
+            id: 1244,
+            title: 'HCGateway Sync Progress',
+            message: `HCGateway is working in the background to sync your data.`,
+            icon: 'ic_launcher',
+            setOnlyAlertOnce: true,
+            color: '#000000',
+          })
+        }
         }
         catch {}
       }
