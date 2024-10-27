@@ -11,5 +11,5 @@ jobs:
       - name: Build and push the image
         run : |
           docker login --username CoolCoderSJ --password ${{ secrets.GH_PAT }} ghcr.io
-          docker build . --tag ghcr.io/CoolCoderSJ/HCGateway:latest
-          docker push ghcr.io/CoolCoderSJ/HCGateway:latest
+          docker build . --tag ghcr.io/CoolCoderSJ/hcgateway:latest
+          docker push ghcr.io/CoolCoderSJ/hcgateway:latest
