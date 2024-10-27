@@ -193,18 +193,13 @@ To run the HCGateway API using Docker, follow these steps:
      -p 6644:6644 \
      --name hcgateway_api \
      --env-file ./api/.env \
-     docker.io/library/hcgateway_api:latest
+     ghcr.io/coolcodersj/hcgateway:latest
    ```
 
 4. **Running the Containers with Docker Compose**\
-    The project uses Docker Compose for easier container orchestration. To build and run the API using Docker Compose, run the following command:
-
-   ```bash
-   docker-compose --env-file ./api/.env up --build
-   ```
-   A community-maintained image is also provided. To use this image instead, run
-   ```bash
-   docker-compose --env-file ./api/.env up -d
+    The project uses Docker Compose for easier container orchestration. To run the API using Docker Compose, run the following command:
+    ```bash
+   docker-compose up -d
    ```
 
 6. **Port Configuration**\
