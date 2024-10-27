@@ -5,7 +5,7 @@ services:
     image: ghcr.io/coolcodersj/hcgateway:latest
     ports:
       - "6644:6644"  # Map port 6644 on the host to 6644 in the container
-    environment:
-      - APP_ENV=${APP_ENV}  # Pass environment variables from .env
+    env_file:
+      - ./api/.env  # Pass environment variables from ./api/.env
     container_name: hcgateway_api  # Assign a name to the container
     restart: always  # Automatically restart the container if it crashes

@@ -199,7 +199,7 @@ To run the HCGateway API using Docker, follow these steps:
 4. **Running the Containers with Docker Compose**\
     The project uses Docker Compose for easier container orchestration. To run the API using Docker Compose, run the following command:
     ```bash
-   docker-compose --env-file ./api/.env up -d
+   docker-compose up -d
    ```
 
 6. **Port Configuration**\
