@@ -8,8 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v3
+      - name: Checkout repository
+      
+      - name: Get latest release tag
+        id: get_release
+        run: |
+          latest_tag=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)
+          echo "Latest Release Tag: $latest_tag"
+          echo "::set-output name=latest_tag::$latest_tag"
+          
       - name: Build and push the image
         run : |
           docker login --username CoolCoderSJ --password ${{ secrets.GH_PAT }} ghcr.io
-          docker build -t ghcr.io/coolcodersj/hcgateway:latest -f ./api/Dockerfile ./api
+          docker build -t ghcr.io/coolcodersj/hcgateway:latest -t ghcr.io/coolcodersj/hcgateway:${{ steps.get_release.outputs.latest_tag }}-${{ github.sha }} -f ./api/Dockerfile ./api
           docker push ghcr.io/coolcodersj/hcgateway:latest
+          docker push ghcr.io/coolcodersj/hcgateway:${{ steps.get_release.outputs.latest_tag }}-${{ github.sha }}
