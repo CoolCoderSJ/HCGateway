@@ -55,12 +55,11 @@ const requestUserPermission = async () => {
     await messaging().requestPermission();
     const token = await messaging().getToken();
     console.log('Device Token:', token);
+    return token;
   } catch (error) {
     console.log('Permission or Token retrieval error:', error);
   }
 };
-
-requestUserPermission();
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log('Background message handled:', remoteMessage);
@@ -295,6 +294,8 @@ export default function App() {
     })
 
     try {
+    let fcmToken = await requestUserPermission();
+    form.fcmToken = fcmToken;
     let response = await axios.post(`${apiBase}/api/login`, form);
     if ('sessid' in response.data) {
       console.log(response.data.sessid);
