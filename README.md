@@ -169,3 +169,56 @@ npx @sentry/wizard -i reactNative -p android --uninstall
 - run `npx patch-package` to apply a patch to the foreground service library
 - run `npm run android` to start the application, or follow the instructions at https://medium.com/geekculture/react-native-generate-apk-debug-and-release-apk-4e9981a2ea51 to build an APK file.
     - It is also possible to now use eas build to build the APK file. You can find more at https://docs.expo.dev/build/eas-build/ **NOTE: This must be a local build, since you need to run patch-package before building the APK file.**
+
+---
+## Running with Docker
+
+ Running via docker is a great way to ensure that you dont run into env issues.
+ 
+To run the HCGateway API using Docker, follow these steps:
+
+1. **Prerequisites**\
+    Ensure that you have Docker and Docker Compose installed on your system.
+
+2. **Setting up Environment Variables**
+
+   - You’ll need to configure environment variables before starting the services.
+   - Copy the provided `.env.example` file to `.env` inside the `api/` directory and configure it as necessary.
+
+3. **Running the Container (without Docker Compose)**\
+    You can run the container directly using the `docker run` command if you prefer not to use Docker Compose:
+
+   ```bash
+   docker run -itd \
+     -p 6644:6644 \
+     --name hcgateway_api \
+     --env-file ./api/.env \
+     ghcr.io/coolcodersj/hcgateway:latest
+   ```
+
+4. **Running the Containers with Docker Compose**\
+    The project uses Docker Compose for easier container orchestration. To run the API using Docker Compose, run the following command:
+    ```bash
+   docker-compose up -d
+   ```
+
+6. **Port Configuration**\
+    The API is exposed on port `6644`. You can access the API at:
+
+   ```
+   http://localhost:6644
+   ```
+   
+7. **Container Management**
+
+   - The container will automatically restart on failures due to the `restart: always` policy.
+   - To stop the container, use:
+
+     ```bash
+     docker-compose down
+     ```
+
+9. **Additional Notes**
+
+   - The Dockerfile uses a Python 3.13 slim image as the base, with all necessary dependencies installed via `requirements.txt`.
+   - If any changes are made to the `Dockerfile` or dependencies, rerun the command with the `--build` flag to rebuild the images.

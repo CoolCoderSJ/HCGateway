@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, TextInput, Button, Switch } from 'react-native';
 import React from 'react';
+import { StatusBar } from 'expo-status-bar';
 import {
   initialize,
   requestPermission,
@@ -179,7 +180,9 @@ const sync = async () => {
   let recordTypes = ["ActiveCaloriesBurned", "BasalBodyTemperature", "BloodGlucose", "BloodPressure", "BasalMetabolicRate", "BodyFat", "BodyTemperature", "BoneMass", "CyclingPedalingCadence", "CervicalMucus", "ExerciseSession", "Distance", "ElevationGained", "FloorsClimbed", "HeartRate", "Height", "Hydration", "LeanBodyMass", "MenstruationFlow", "MenstruationPeriod", "Nutrition", "OvulationTest", "OxygenSaturation", "Power", "RespiratoryRate", "RestingHeartRate", "SleepSession", "Speed", "Steps", "StepsCadence", "TotalCaloriesBurned", "Vo2Max", "Weight", "WheelchairPushes"]; 
   
   for (let i = 0; i < recordTypes.length; i++) {
-      let records = await readRecords(recordTypes[i],
+      let records;
+      try {
+      records = await readRecords(recordTypes[i],
         {
           timeRangeFilter: {
             operator: "between",
@@ -188,6 +191,11 @@ const sync = async () => {
           }
         }
       );
+      }
+      catch (err) {
+        console.log(err)
+        continue;
+      }
       console.log(recordTypes[i]);
       numRecords += records.length;
 
@@ -221,6 +229,17 @@ const sync = async () => {
                 curr: numRecordsSynced,
               }
             })
+
+            if (numRecordsSynced == numRecords) {
+              ReactNativeForegroundService.update({
+                id: 1244,
+                title: 'HCGateway Sync Progress',
+                message: `HCGateway is working in the background to sync your data.`,
+                icon: 'ic_launcher',
+                setOnlyAlertOnce: true,
+                color: '#000000',
+              })
+            }
             }
             catch {}
           }, j*3000)
@@ -246,6 +265,17 @@ const sync = async () => {
             curr: numRecordsSynced,
           }
         })
+
+        if (numRecordsSynced == numRecords) {
+          ReactNativeForegroundService.update({
+            id: 1244,
+            title: 'HCGateway Sync Progress',
+            message: `HCGateway is working in the background to sync your data.`,
+            icon: 'ic_launcher',
+            setOnlyAlertOnce: true,
+            color: '#000000',
+          })
+        }
         }
         catch {}
       }
@@ -537,6 +567,7 @@ export default function App() {
         </View>
       }
 
+    <StatusBar style="dark" />
     <Toast />
     </View>
   );
