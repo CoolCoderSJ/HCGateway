@@ -68,6 +68,7 @@ def login():
         return jsonify({'error': 'invalid request'}), 400
     username = request.json['username']
     password = request.json['password']
+    fcmToken = request.json['fcmToken'] if 'fcmToken' in request.json else None
 
     allusers = users.list(queries=[Query.equal('name', username)])['users']
     if len(allusers) == 0:
@@ -80,6 +81,46 @@ def login():
     except: 
         return jsonify({'error': 'invalid password'}), 403
    
+    if fcmToken:
+        session = requests.Session()
+        email = user['email']
+        if not email:
+            email = user['$id'] + "@hcgateway.dev"
+            users.update_email(user['$id'], email)
+        
+        headers = {
+            'X-Appwrite-Response-Format': '1.5.0',
+            'X-Appwrite-Project': os.environ['APPWRITE_ID'],
+            'Content-Type': 'application/json',
+        }
+
+        r = session.post(f"{os.environ['APPWRITE_HOST']}/v1/account/sessions/email", headers=headers, data=json.dumps({"email": email, "password": password})).json()
+        print(r)
+        sId = r['$id']
+
+        payload = json.dumps({
+        "targetId": "fcmPush",
+        "identifier": fcmToken,
+        "providerId": "fcm"
+        })
+
+        headers = {
+        'X-Appwrite-Response-Format': '1.5.0',
+        'X-Appwrite-Project': os.environ['APPWRITE_ID'],
+        'X-Appwrite-Session': sId,
+        'Content-Type': 'application/json',
+        }
+        print(headers)
+        r = session.post(f"{os.environ['APPWRITE_HOST']}/v1/account/targets/push", headers=headers, data=payload).json()
+        print(r)
+
+        if "code" in r and r['code'] == 409:
+            print("updating")
+            r = session.put(f"{os.environ['APPWRITE_HOST']}/v1/account/targets/fcmPush/push", headers=headers, data=payload).json()
+            print(r)
+
+        session.delete(f"{os.environ['APPWRITE_HOST']}/v1/account/sessions/{sId}", headers=headers)
+
     sessid = user['$id']
     return jsonify({'sessid': sessid}), 201
 
