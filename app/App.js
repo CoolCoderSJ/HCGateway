@@ -303,7 +303,7 @@ export default function App() {
       Toast.show({
         type: 'error',
         text1: "Login failed",
-        text2: "Your credentials may be incorrect. Please try again."
+        text2: err.message
       })
     }
   }
