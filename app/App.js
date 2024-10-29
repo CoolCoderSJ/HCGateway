@@ -5,7 +5,8 @@ import {
   initialize,
   requestPermission,
   readRecords,
-  readRecord
+  readRecord,
+  insertRecords
 } from 'react-native-health-connect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
@@ -62,15 +63,23 @@ const requestUserPermission = async () => {
 };
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log('Background message handled:', remoteMessage);
+  console.log(remoteMessage)
+  let notification = remoteMessage.notification;
+  if (notification.title == 'PUSH') {
+    handlePush(notification);
+  }
 });
 
 messaging().onMessage(remoteMessage => {
-  console.log('Foreground message:', remoteMessage);
+  console.log(remoteMessage)
+  let notification = remoteMessage.notification;
+  if (notification.title == 'PUSH') {
+    handlePush(notification);
+  }
 });
 
 let login;
-let apiBase = 'https://api.hcgateway.shuchir.dev';
+let apiBase = 'http://192.168.40.150:6644';
 let lastSync = null;
 let taskDelay = 7200 * 1000; // 2 hours
 
@@ -151,11 +160,45 @@ const askForPermissions = async () => {
     { accessType: 'read', recordType: 'Vo2Max' },
     { accessType: 'read', recordType: 'Weight' },
     { accessType: 'read', recordType: 'WheelchairPushes' },
+    { accessType: 'write', recordType: 'ActiveCaloriesBurned' },
+    { accessType: 'write', recordType: 'BasalBodyTemperature' },
+    { accessType: 'write', recordType: 'BloodGlucose' },
+    { accessType: 'write', recordType: 'BloodPressure' },
+    { accessType: 'write', recordType: 'BasalMetabolicRate' },
+    { accessType: 'write', recordType: 'BodyFat' },
+    { accessType: 'write', recordType: 'BodyTemperature' },
+    { accessType: 'write', recordType: 'BoneMass' },
+    { accessType: 'write', recordType: 'CyclingPedalingCadence' },
+    { accessType: 'write', recordType: 'CervicalMucus' },
+    { accessType: 'write', recordType: 'ExerciseSession' },
+    { accessType: 'write', recordType: 'Distance' },
+    { accessType: 'write', recordType: 'ElevationGained' },
+    { accessType: 'write', recordType: 'FloorsClimbed' },
+    { accessType: 'write', recordType: 'HeartRate' },
+    { accessType: 'write', recordType: 'Height' },
+    { accessType: 'write', recordType: 'Hydration' },
+    { accessType: 'write', recordType: 'LeanBodyMass' },
+    { accessType: 'write', recordType: 'MenstruationFlow' },
+    { accessType: 'write', recordType: 'MenstruationPeriod' },
+    { accessType: 'write', recordType: 'Nutrition' },
+    { accessType: 'write', recordType: 'OvulationTest' },
+    { accessType: 'write', recordType: 'OxygenSaturation' },
+    { accessType: 'write', recordType: 'Power' },
+    { accessType: 'write', recordType: 'RespiratoryRate' },
+    { accessType: 'write', recordType: 'RestingHeartRate' },
+    { accessType: 'write', recordType: 'SleepSession' },
+    { accessType: 'write', recordType: 'Speed' },
+    { accessType: 'write', recordType: 'Steps' },
+    { accessType: 'write', recordType: 'StepsCadence' },
+    { accessType: 'write', recordType: 'TotalCaloriesBurned' },
+    { accessType: 'write', recordType: 'Vo2Max' },
+    { accessType: 'write', recordType: 'Weight' },
+    { accessType: 'write', recordType: 'WheelchairPushes' },
   ]);
 
   console.log(grantedPermissions);
 
-  if (grantedPermissions.length < 34) {
+  if (grantedPermissions.length < 68) {
     Toast.show({
       type: 'error',
       text1: "Permissions not granted",
@@ -279,6 +322,18 @@ const sync = async () => {
         catch {}
       }
   }
+}
+
+const handlePush = async (message) => {
+  const isInitialized = await initialize();
+  
+  console.log("Push received:", message);
+  let data = JSON.parse(message.body);
+
+  insertRecords(data)
+  .then((ids) => {
+    console.log("Records inserted successfully: ", { ids });
+  })
 }
   
 

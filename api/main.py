@@ -16,6 +16,7 @@ from appwrite.client import Client
 from appwrite.services.databases import Databases
 from appwrite.query import Query
 from appwrite.services.users import Users
+from appwrite.services.messaging import Messaging
 
 from argon2 import PasswordHasher
 ph = PasswordHasher()
@@ -29,6 +30,7 @@ client = (Client()
     .set_key(os.environ['APPWRITE_KEY']))   
 db = Databases(client)
 users = Users(client)
+messaging = Messaging(client)
 
 app = Flask(__name__)
 CORS(app)
@@ -237,5 +239,32 @@ def fetch(method):
     for doc in docs:
         doc['data'] = json.loads(fernet.decrypt(doc['data'].encode()).decode())
     return jsonify(docs), 200
+
+@app.route("/api/push/<method>", methods=['PUT'])
+def pushData(method):
+    if not "userid" in request.json:
+        return jsonify({'error': 'no user id provided'}), 400
+    if not method:
+        return jsonify({'error': 'no method provided'}), 400
+    if not "data" in request.json:
+        return jsonify({'error': 'no data provided'}), 400
+
+    userid = request.json['userid']
+    data = request.json['data']
+    if type(data) != list:
+        data = [data]
+
+    fixedMethodName = method[0].upper() + method[1:]
+    for r in data:
+        r['recordType'] = fixedMethodName
+        if "startTime" not in r or "endTime" not in r:
+            return jsonify({'error': 'no start or end time provided'}), 400
+
+    try:
+        messaging.create_push("unique()", "PUSH", json.dumps(data), users = [userid])
+    except Exception as e:
+        return jsonify({'error': 'Message delivery failed', "appwriteError": e}), 500
+
+    return jsonify({'success': True, "message": "request has been sent to device."}), 200
 
 app.run(host=os.environ.get('APP_HOST', '0.0.0.0'), port=int(os.environ.get('APP_PORT', 6644)), debug=bool(os.environ.get('APP_DEBUG', False)))
