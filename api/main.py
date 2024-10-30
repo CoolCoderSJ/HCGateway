@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os, json, requests
 from dotenv import load_dotenv
 load_dotenv()
+from pyfcm import FCMNotification
 
 try:
     sentry_sdk.init(
@@ -84,45 +85,13 @@ def login():
         return jsonify({'error': 'invalid password'}), 403
    
     if fcmToken:
-        session = requests.Session()
-        email = user['email']
-        if not email:
-            email = user['$id'] + "@hcgateway.dev"
-            users.update_email(user['$id'], email)
+        try:
+            users.update_prefs(user['$id'], prefs={
+                'fcmToken': fcmToken
+            })
+        except:
+            return jsonify({'error': 'failed to update fcm token'}), 500
         
-        headers = {
-            'X-Appwrite-Response-Format': '1.5.0',
-            'X-Appwrite-Project': os.environ['APPWRITE_ID'],
-            'Content-Type': 'application/json',
-        }
-
-        r = session.post(f"{os.environ['APPWRITE_HOST']}/v1/account/sessions/email", headers=headers, data=json.dumps({"email": email, "password": password})).json()
-        print(r)
-        sId = r['$id']
-
-        payload = json.dumps({
-        "targetId": "fcmPush",
-        "identifier": fcmToken,
-        "providerId": "fcm"
-        })
-
-        headers = {
-        'X-Appwrite-Response-Format': '1.5.0',
-        'X-Appwrite-Project': os.environ['APPWRITE_ID'],
-        'X-Appwrite-Session': sId,
-        'Content-Type': 'application/json',
-        }
-        print(headers)
-        r = session.post(f"{os.environ['APPWRITE_HOST']}/v1/account/targets/push", headers=headers, data=payload).json()
-        print(r)
-
-        if "code" in r and r['code'] == 409:
-            print("updating")
-            r = session.put(f"{os.environ['APPWRITE_HOST']}/v1/account/targets/fcmPush/push", headers=headers, data=payload).json()
-            print(r)
-
-        session.delete(f"{os.environ['APPWRITE_HOST']}/v1/account/sessions/{sId}", headers=headers)
-
     sessid = user['$id']
     return jsonify({'sessid': sessid}), 201
 
@@ -260,10 +229,19 @@ def pushData(method):
         if "startTime" not in r or "endTime" not in r:
             return jsonify({'error': 'no start or end time provided'}), 400
 
+    prefs = users.get_prefs(userid)
+    fcmToken = prefs['fcmToken'] if 'fcmToken' in prefs else None
+    if not fcmToken:
+        return jsonify({'error': 'no fcm token found'}), 404
+
+    fcm = FCMNotification(service_account_file='service-account.json', project_id=os.environ['FCM_PROJECT_ID'])
+
     try:
-        messaging.create_push("unique()", "PUSH", json.dumps(data), users = [userid])
+        fcm.notify(fcm_token=fcmToken, data_payload={
+            "data": json.dumps(data),
+        })
     except Exception as e:
-        return jsonify({'error': 'Message delivery failed', "appwriteError": e}), 500
+        return jsonify({'error': 'Message delivery failed', "fcmError": e}), 500
 
     return jsonify({'success': True, "message": "request has been sent to device."}), 200
 
