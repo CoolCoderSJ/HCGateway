@@ -240,6 +240,7 @@ def pushData(method):
 
     try:
         fcm.notify(fcm_token=fcmToken, data_payload={
+            "op": "PUSH",
             "data": json.dumps(data),
         })
     except Exception as e:

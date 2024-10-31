@@ -77,11 +77,11 @@ const requestUserPermission = async () => {
 };
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
-  handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
 });
 
 messaging().onMessage(remoteMessage => {
-  handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
 });
 
 let login;
