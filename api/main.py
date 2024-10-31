@@ -226,8 +226,10 @@ def pushData(method):
     fixedMethodName = method[0].upper() + method[1:]
     for r in data:
         r['recordType'] = fixedMethodName
-        if "startTime" not in r:
-            return jsonify({'error': 'no start time provided'}), 400
+        if "time" not in r and ("startTime" not in r or "endTime" not in r):
+            return jsonify({'error': 'no start time or end time provided. If only one time is to be used, then use the "time" attribute instead.'}), 400
+        if ("startTime" in r and "endTime" not in r) or ("startTime" not in r and "endTime" in r):
+            return jsonify({'error': 'start time and end time must be provided together.'}), 400
 
     prefs = users.get_prefs(userid)
     fcmToken = prefs['fcmToken'] if 'fcmToken' in prefs else None

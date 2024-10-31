@@ -63,12 +63,10 @@ const requestUserPermission = async () => {
 };
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log(remoteMessage)
   handlePush(remoteMessage.data);
 });
 
 messaging().onMessage(remoteMessage => {
-  console.log(remoteMessage)
   handlePush(remoteMessage.data);
 });
 
@@ -321,8 +319,8 @@ const sync = async () => {
 const handlePush = async (message) => {
   const isInitialized = await initialize();
   
-  console.log("Push received:", message);
   let data = JSON.parse(message.data);
+  console.log(data);
 
   insertRecords(data)
   .then((ids) => {
