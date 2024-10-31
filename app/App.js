@@ -15,12 +15,26 @@ import ReactNativeForegroundService from '@supersami/rn-foreground-service';
 import {requestNotifications} from 'react-native-permissions';
 import * as Sentry from '@sentry/react-native';
 import messaging from '@react-native-firebase/messaging';
+import {Notifications} from 'react-native-notifications';
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
+
+Notifications.setNotificationChannel({
+  channelId: 'push-errors',
+  name: 'Push Errors',
+  importance: 5,
+  description: 'Alerts for push errors',
+  groupId: 'push-errors',
+  groupName: 'Errors',
+  enableLights: true,
+  enableVibration: true,
+  showBadge: true,
+  vibrationPattern: [200, 1000, 500, 1000, 500],
+})
 
 let isSentryEnabled = true;
 get('sentryEnabled')
@@ -325,6 +339,16 @@ const handlePush = async (message) => {
   insertRecords(data)
   .then((ids) => {
     console.log("Records inserted successfully: ", { ids });
+  })
+  .catch((error) => {
+    Notifications.postLocalNotification({
+      body: "Error: " + error.message,
+      title: `Push failed for ${data[0].recordType}`,
+      silent: false,
+      category: "Push Errors",
+      fireDate: new Date(),
+      android_channel_id: 'push-errors',
+    });
   })
 }
   
