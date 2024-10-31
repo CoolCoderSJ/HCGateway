@@ -96,7 +96,7 @@ def login():
     return jsonify({'sessid': sessid}), 201
 
 
-@app.route("/api/sync/<method>", methods=['POST'])
+@app.post("/api/sync/<method>")
 def sync(method):
     print(request.json)
     method = method[0].lower() + method[1:]
@@ -284,5 +284,33 @@ def delData(method):
 
     return jsonify({'success': True, "message": "request has been sent to device."}), 200
 
+
+@app.delete("/api/sync/<method>")
+def delFromDb(method):
+    if not "userid" in request.json:
+        return jsonify({'error': 'no user id provided'}), 400
+    if not method:
+        return jsonify({'error': 'no method provided'}), 400
+    if not "uuid" in request.json:
+        return jsonify({'error': 'no uuid provided'}), 400
+
+    userid = request.json['userid']
+    uuids = request.json['uuid']
+
+    try:
+        dbid = db.get(userid)['$id']
+    except:
+        return jsonify({'error': 'no database found for user'}), 404
+
+    try:
+        collectionid = db.get_collection(dbid, method)['$id']
+    except:
+        return jsonify({'error': 'no collection found for user'}), 404
+    print(dbid, collectionid, uuids[0])
+    for uuid in uuids:
+        try: db.delete_document(dbid, collectionid, uuid)
+        except Exception as e: print(e)
+
+    return jsonify({'success': True}), 200
 
 app.run(host=os.environ.get('APP_HOST', '0.0.0.0'), port=int(os.environ.get('APP_PORT', 6644)), debug=bool(os.environ.get('APP_DEBUG', False)))

@@ -242,6 +242,8 @@ const sync = async () => {
           }
         }
       );
+
+      records = records.records;
       }
       catch (err) {
         console.log(err)
@@ -362,18 +364,11 @@ const handleDel = async (message) => {
   console.log(data);
 
   deleteRecordsByUuids(data.recordType, data.uuids, data.uuids)
-  .then((ids) => {
-    console.log("Records deleted successfully: ", { ids });
-  })
-  .catch((error) => {
-    Notifications.postLocalNotification({
-      body: "Error: " + error.message,
-      title: `Del failed for ${data[0].recordType}`,
-      silent: false,
-      category: "Push Errors",
-      fireDate: new Date(),
-      android_channel_id: 'push-errors',
-    });
+  axios.delete(`${apiBase}/api/sync/${data.recordType}`, {
+    data :{
+      uuid: data.uuids,
+      userid: login
+    }
   })
 }
   
