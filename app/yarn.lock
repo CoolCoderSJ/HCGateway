@@ -6263,10 +6263,10 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
-react-native-health-connect@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/react-native-health-connect/-/react-native-health-connect-2.1.0.tgz#c2be2185aabbe213e70832302fe3d48dddafb8dc"
-  integrity sha512-X9aRh0oRC7D3qQp/uCo9GY2nM90a+FeSOUxmIFIkf/aUR//waQ2HHxSAhUWU8ax2g86jyam7Yk5U3SHW+STN/w==
+react-native-health-connect@^3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/react-native-health-connect/-/react-native-health-connect-3.2.1.tgz#7833bd9d2639d9d5d542276b6b0a70c40e87fce0"
+  integrity sha512-n7jje1mWyof7YdfLtw20EtglVqdDDbZND7gGlIIxt+HnAGsLa9jq8Ft0vUa8X6Of802khX+r0WsNHZNyy00LYQ==
 
 react-native-notifications@^5.1.0:
   version "5.1.0"

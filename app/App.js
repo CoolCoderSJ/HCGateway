@@ -6,7 +6,8 @@ import {
   requestPermission,
   readRecords,
   readRecord,
-  insertRecords
+  insertRecords,
+  deleteRecordsByUuids
 } from 'react-native-health-connect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
@@ -78,10 +79,12 @@ const requestUserPermission = async () => {
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == "DEL") handleDel(remoteMessage.data);
 });
 
 messaging().onMessage(remoteMessage => {
   if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == "DEL") handleDel(remoteMessage.data);
 });
 
 let login;
@@ -344,6 +347,28 @@ const handlePush = async (message) => {
     Notifications.postLocalNotification({
       body: "Error: " + error.message,
       title: `Push failed for ${data[0].recordType}`,
+      silent: false,
+      category: "Push Errors",
+      fireDate: new Date(),
+      android_channel_id: 'push-errors',
+    });
+  })
+}
+
+const handleDel = async (message) => {
+  const isInitialized = await initialize();
+  
+  let data = JSON.parse(message.data);
+  console.log(data);
+
+  deleteRecordsByUuids(data.recordType, data.uuids, data.uuids)
+  .then((ids) => {
+    console.log("Records deleted successfully: ", { ids });
+  })
+  .catch((error) => {
+    Notifications.postLocalNotification({
+      body: "Error: " + error.message,
+      title: `Del failed for ${data[0].recordType}`,
       silent: false,
       category: "Push Errors",
       fireDate: new Date(),

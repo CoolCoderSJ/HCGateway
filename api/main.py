@@ -248,4 +248,41 @@ def pushData(method):
 
     return jsonify({'success': True, "message": "request has been sent to device."}), 200
 
+@app.route("/api/delete/<method>", methods=['DELETE'])
+def delData(method):
+    if not "userid" in request.json:
+        return jsonify({'error': 'no user id provided'}), 400
+    if not method:
+        return jsonify({'error': 'no method provided'}), 400
+    if not "uuid" in request.json:
+        return jsonify({'error': 'no uuid provided'}), 400
+
+    userid = request.json['userid']
+    uuids = request.json['uuid']
+    if type(uuids) != list:
+        uuids = [uuids]
+
+    fixedMethodName = method[0].upper() + method[1:]
+
+    prefs = users.get_prefs(userid)
+    fcmToken = prefs['fcmToken'] if 'fcmToken' in prefs else None
+    if not fcmToken:
+        return jsonify({'error': 'no fcm token found'}), 404
+
+    fcm = FCMNotification(service_account_file='service-account.json', project_id=os.environ['FCM_PROJECT_ID'])
+
+    try:
+        fcm.notify(fcm_token=fcmToken, data_payload={
+            "op": "DEL",
+            "data": json.dumps({
+                "uuids": uuids,
+                "recordType": fixedMethodName
+            }),
+        })
+    except Exception as e:
+        return jsonify({'error': 'Message delivery failed', "fcmError": e}), 500
+
+    return jsonify({'success': True, "message": "request has been sent to device."}), 200
+
+
 app.run(host=os.environ.get('APP_HOST', '0.0.0.0'), port=int(os.environ.get('APP_PORT', 6644)), debug=bool(os.environ.get('APP_DEBUG', False)))
