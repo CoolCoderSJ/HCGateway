@@ -47,7 +47,7 @@ Support for more types is planned for the future.
 - The server encrypts the data using Fernet encryption, then stores it in a database hosted on a custom instance of Appwrite.
 - The server exposes an API to let developers login and get the data for their users.
 
-The platform is currently a **one way sync**. Any changes made to health connect data by other apps will not be synced. The ability to add/edit/delete data through the api is planned for the future.
+The platform allows two-way sync, which means you can make changes to your local Health Connect store remotely via REST api.
 
 ## Get Started
 - There is a live instance hosted at https://api.hcgateway.shuchir.dev/ that you can use. You can also host your own instance. To learn more on Self Hosting, skip down to the Self Hosting section.
@@ -120,6 +120,12 @@ The REST API is a simple Flask application that exposes the following endpoints:
         - `user` - The user ID of the user
         - `data` - The data to be dumped. 
 
+- `/api/sync/<method>` - Delete data from the database. **This method is exclusive to the application, and should not be used otherwise.** This method only removes data from the HCGateway database, and not from your local health connect store. This method is only used to clean the database after a local record has already been deleted.
+    - Method: `DELETE`
+    - Body Parameters:
+        - `userid` - The user ID of the user
+        - `uuid` - Can be a string or an array of strings and should be the uuid of the object to delete.
+
 - `/api/fetch/<method>` - Get data from the database.
     - Method: `POST`
     - URL Parameters:
@@ -140,19 +146,49 @@ The REST API is a simple Flask application that exposes the following endpoints:
     - Response:
         - `data` - The data retrieved from the database
 
+- `/api/push/<method>` - Insert data into your local Health Connect store. This method does not add the data to the HCGateway database. This method is only used to push data to your local Health Connect store. This is so you can sync + fetch to verify the record has been added.
+    - Method: `PUT`
+    - URL Parameters:
+        - `method` - The method to use. The methods are listed above, next to each supported data type under the `How It Works` section. For example, to push blood glucose data, you would use `/api/push/bloodGlucose`.
+    - Body Parameters:
+        - `userid` - The user ID of the user
+        - `data` - The data to be pushed. This can be an object or an array of objects. The format of each object depends on the type of data being inserted. All object structures can be found directly from the [Health Connect documentation](https://developer.android.com/reference/kotlin/androidx/health/connect/client/records/package-summary#classes)
+
+- `/api/delete/<method>` - Request deletion for a record. This method does not delete the record from the HCGateway database. This method is only used to request deletion of a record from your local Health Connect store. The app will delete it from the database using the sync method once it has deleted the record(s) locally.
+    - Method: `DELETE`
+    - URL Parameters:
+        - `method` - The method to use. The methods are listed above, next to each supported data type under the `How It Works` section. For example, to delete blood glucose data, you would use `/api/delete/bloodGlucose`.
+    - Body Parameters:
+        - `userid` - The user ID of the user
+        - `uuid` - The UUID of the record to delete. This can be a string or an array of strings.
+
 ## Mobile Application
-The mobile application is a simple Android application that pings the server every 2 hours to send data. It starts a foreground service to do this, and the service will run even if the application is closed. The application is written in React Native.
+The mobile application is a simple Android application that pings the server every 2 hours (customizable) to send data. It starts a foreground service to do this, and the service will run even if the application is closed. The application is written in React Native.
 
 ## Self Hosting
-You can self host the server and database. To do this, follow the steps below:
+You can self host the server and database for full control. However, if you'd like to push from your own server, you must build the mobile application yourself. You can find the instructions to build the mobile application below. This is because the app is packaged with the firebase key, and cannot change it dynamically. Again, firebase is only necessary if you want to push from your own server.
+### Firebase
+Follow these steps to set up Firebase:
+1. Create a new Firebase project at https://console.firebase.google.com/
+2. Add an Android app to the project
+3. Download the `google-services.json` file and place it in the `firebase/` folder as well as the `android/app/` folder
+
+### Docker (recommended)
+Skip down to the Running with Docker section to learn how to run the server using Docker.
+
+### Manual
+#### Server
 - You need Python 3 and NodeJS 18+ installed on your machine
 - Install appwrite and make sure your instance is accessible from the machine running the HCGateway server. You can find more at https://appwrite.io/
 - Clone this repository
 - `cd` into the api/ folder
 - run `pip install -r requirements.txt`
 - rename `.env.example` to `.env` and fill in the values
+- Visit the firebase console > project settings > Service accounts and click generate new private key
+- Save the file as `service-account.json` in the `api/` folder
 - run `python3 main.py` to start the server
 
+#### Mobile Application
 To run the mobile application:
 - in another window/tab, `cd` into the app/ folder
 - run `npm install`
@@ -167,7 +203,7 @@ npx @sentry/wizard -i reactNative -p android --uninstall
     - Change these details again in android/sentry.properties
     - Change the DSN in the AndroidManifest.xml
 - run `npx patch-package` to apply a patch to the foreground service library
-- run `npm run android` to start the application, or follow the instructions at https://medium.com/geekculture/react-native-generate-apk-debug-and-release-apk-4e9981a2ea51 to build an APK file.
+- run `npm run android` to start the application, or `cd android && ./gradlew assembleRelease` to build the APK file
     - It is also possible to now use eas build to build the APK file. You can find more at https://docs.expo.dev/build/eas-build/ **NOTE: This must be a local build, since you need to run patch-package before building the APK file.**
 
 ---
