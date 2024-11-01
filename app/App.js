@@ -88,7 +88,7 @@ messaging().onMessage(remoteMessage => {
 });
 
 let login;
-let apiBase = 'http://192.168.40.150:6644';
+let apiBase = 'https://api.hcgateway.shuchir.dev';
 let lastSync = null;
 let taskDelay = 7200 * 1000; // 2 hours
 
