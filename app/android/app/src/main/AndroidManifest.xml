@@ -80,7 +80,7 @@
       <data android:scheme="https"/>
     </intent>
   </queries>
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme">
+  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme" android:usesCleartextTraffic="true">
     <meta-data android:name="com.supersami.foregroundservice.notification_channel_description" android:value="No description available."/>
     <meta-data android:name="com.supersami.foregroundservice.notification_channel_name" android:value="Persistent Sync Status"/>
     <meta-data android:name="com.supersami.foregroundservice.notification_color" android:resource="@color/blue"/>
