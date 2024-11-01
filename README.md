@@ -149,7 +149,7 @@ The REST API is a simple Flask application that exposes the following endpoints:
 - `/api/push/<method>` - Insert data into your local Health Connect store. This method does not add the data to the HCGateway database. This method is only used to push data to your local Health Connect store. This is so you can sync + fetch to verify the record has been added.
     - Method: `PUT`
     - URL Parameters:
-        - `method` - The method to use. The methods are listed above, next to each supported data type under the `How It Works` section. For example, to push blood glucose data, you would use `/api/push/bloodGlucose`.
+        - `method` - The method to use. The methods are listed above, next to each supported data type under the `How It Works` section. For example, to push blood glucose data, you would use `/api/push/bloodGlucose`. To update a record, push to this method with the same timestamp as the original record and HCGateway will simply update the existing record.
     - Body Parameters:
         - `userid` - The user ID of the user
         - `data` - The data to be pushed. This can be an object or an array of objects. The format of each object depends on the type of data being inserted. All object structures can be found directly from the [Health Connect documentation](https://developer.android.com/reference/kotlin/androidx/health/connect/client/records/package-summary#classes)
