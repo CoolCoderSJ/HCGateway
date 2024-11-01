@@ -280,7 +280,8 @@ def delData(method):
             }),
         })
     except Exception as e:
-        return jsonify({'error': 'Message delivery failed', "fcmError": e}), 500
+        sentry_sdk.capture_exception(e)
+        return jsonify({'error': 'Message delivery failed'}), 500
 
     return jsonify({'success': True, "message": "request has been sent to device."}), 200
 
