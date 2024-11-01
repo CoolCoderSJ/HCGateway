@@ -5,7 +5,9 @@ import {
   initialize,
   requestPermission,
   readRecords,
-  readRecord
+  readRecord,
+  insertRecords,
+  deleteRecordsByUuids
 } from 'react-native-health-connect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
@@ -13,12 +15,27 @@ import axios from 'axios';
 import ReactNativeForegroundService from '@supersami/rn-foreground-service';
 import {requestNotifications} from 'react-native-permissions';
 import * as Sentry from '@sentry/react-native';
+import messaging from '@react-native-firebase/messaging';
+import {Notifications} from 'react-native-notifications';
 
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
+
+Notifications.setNotificationChannel({
+  channelId: 'push-errors',
+  name: 'Push Errors',
+  importance: 5,
+  description: 'Alerts for push errors',
+  groupId: 'push-errors',
+  groupName: 'Errors',
+  enableLights: true,
+  enableVibration: true,
+  showBadge: true,
+  vibrationPattern: [200, 1000, 500, 1000, 500],
+})
 
 let isSentryEnabled = true;
 get('sentryEnabled')
@@ -48,6 +65,27 @@ get('sentryEnabled')
     });
   });
 ReactNativeForegroundService.register();
+
+const requestUserPermission = async () => {
+  try {
+    await messaging().requestPermission();
+    const token = await messaging().getToken();
+    console.log('Device Token:', token);
+    return token;
+  } catch (error) {
+    console.log('Permission or Token retrieval error:', error);
+  }
+};
+
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == "DEL") handleDel(remoteMessage.data);
+});
+
+messaging().onMessage(remoteMessage => {
+  if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == "DEL") handleDel(remoteMessage.data);
+});
 
 let login;
 let apiBase = 'https://api.hcgateway.shuchir.dev';
@@ -131,11 +169,45 @@ const askForPermissions = async () => {
     { accessType: 'read', recordType: 'Vo2Max' },
     { accessType: 'read', recordType: 'Weight' },
     { accessType: 'read', recordType: 'WheelchairPushes' },
+    { accessType: 'write', recordType: 'ActiveCaloriesBurned' },
+    { accessType: 'write', recordType: 'BasalBodyTemperature' },
+    { accessType: 'write', recordType: 'BloodGlucose' },
+    { accessType: 'write', recordType: 'BloodPressure' },
+    { accessType: 'write', recordType: 'BasalMetabolicRate' },
+    { accessType: 'write', recordType: 'BodyFat' },
+    { accessType: 'write', recordType: 'BodyTemperature' },
+    { accessType: 'write', recordType: 'BoneMass' },
+    { accessType: 'write', recordType: 'CyclingPedalingCadence' },
+    { accessType: 'write', recordType: 'CervicalMucus' },
+    { accessType: 'write', recordType: 'ExerciseSession' },
+    { accessType: 'write', recordType: 'Distance' },
+    { accessType: 'write', recordType: 'ElevationGained' },
+    { accessType: 'write', recordType: 'FloorsClimbed' },
+    { accessType: 'write', recordType: 'HeartRate' },
+    { accessType: 'write', recordType: 'Height' },
+    { accessType: 'write', recordType: 'Hydration' },
+    { accessType: 'write', recordType: 'LeanBodyMass' },
+    { accessType: 'write', recordType: 'MenstruationFlow' },
+    { accessType: 'write', recordType: 'MenstruationPeriod' },
+    { accessType: 'write', recordType: 'Nutrition' },
+    { accessType: 'write', recordType: 'OvulationTest' },
+    { accessType: 'write', recordType: 'OxygenSaturation' },
+    { accessType: 'write', recordType: 'Power' },
+    { accessType: 'write', recordType: 'RespiratoryRate' },
+    { accessType: 'write', recordType: 'RestingHeartRate' },
+    { accessType: 'write', recordType: 'SleepSession' },
+    { accessType: 'write', recordType: 'Speed' },
+    { accessType: 'write', recordType: 'Steps' },
+    { accessType: 'write', recordType: 'StepsCadence' },
+    { accessType: 'write', recordType: 'TotalCaloriesBurned' },
+    { accessType: 'write', recordType: 'Vo2Max' },
+    { accessType: 'write', recordType: 'Weight' },
+    { accessType: 'write', recordType: 'WheelchairPushes' },
   ]);
 
   console.log(grantedPermissions);
 
-  if (grantedPermissions.length < 34) {
+  if (grantedPermissions.length < 68) {
     Toast.show({
       type: 'error',
       text1: "Permissions not granted",
@@ -170,6 +242,8 @@ const sync = async () => {
           }
         }
       );
+
+      records = records.records;
       }
       catch (err) {
         console.log(err)
@@ -260,6 +334,43 @@ const sync = async () => {
       }
   }
 }
+
+const handlePush = async (message) => {
+  const isInitialized = await initialize();
+  
+  let data = JSON.parse(message.data);
+  console.log(data);
+
+  insertRecords(data)
+  .then((ids) => {
+    console.log("Records inserted successfully: ", { ids });
+  })
+  .catch((error) => {
+    Notifications.postLocalNotification({
+      body: "Error: " + error.message,
+      title: `Push failed for ${data[0].recordType}`,
+      silent: false,
+      category: "Push Errors",
+      fireDate: new Date(),
+      android_channel_id: 'push-errors',
+    });
+  })
+}
+
+const handleDel = async (message) => {
+  const isInitialized = await initialize();
+  
+  let data = JSON.parse(message.data);
+  console.log(data);
+
+  deleteRecordsByUuids(data.recordType, data.uuids, data.uuids)
+  axios.delete(`${apiBase}/api/sync/${data.recordType}`, {
+    data :{
+      uuid: data.uuids,
+      userid: login
+    }
+  })
+}
   
 
 export default function App() {
@@ -274,6 +385,8 @@ export default function App() {
     })
 
     try {
+    let fcmToken = await requestUserPermission();
+    form.fcmToken = fcmToken;
     let response = await axios.post(`${apiBase}/api/login`, form);
     if ('sessid' in response.data) {
       console.log(response.data.sessid);

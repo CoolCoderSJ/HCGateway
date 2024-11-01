@@ -1,0 +1,29 @@
+{
+    "project_info": {
+      "project_number": "1047860968893",
+      "project_id": "hcgateway-fcm",
+      "storage_bucket": "hcgateway-fcm.appspot.com"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:1047860968893:android:6fdf29797dda6c99dde6d4",
+          "android_client_info": {
+            "package_name": "dev.shuchir.hcgateway"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyDFy0mrwlLwAXUmhQqjsUg8PHDtIuiSgzI"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }

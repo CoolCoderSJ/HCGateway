@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os, json, requests
 from dotenv import load_dotenv
 load_dotenv()
+from pyfcm import FCMNotification
 
 try:
     sentry_sdk.init(
@@ -16,6 +17,7 @@ from appwrite.client import Client
 from appwrite.services.databases import Databases
 from appwrite.query import Query
 from appwrite.services.users import Users
+from appwrite.services.messaging import Messaging
 
 from argon2 import PasswordHasher
 ph = PasswordHasher()
@@ -29,6 +31,7 @@ client = (Client()
     .set_key(os.environ['APPWRITE_KEY']))   
 db = Databases(client)
 users = Users(client)
+messaging = Messaging(client)
 
 app = Flask(__name__)
 CORS(app)
@@ -68,6 +71,7 @@ def login():
         return jsonify({'error': 'invalid request'}), 400
     username = request.json['username']
     password = request.json['password']
+    fcmToken = request.json['fcmToken'] if 'fcmToken' in request.json else None
 
     allusers = users.list(queries=[Query.equal('name', username)])['users']
     if len(allusers) == 0:
@@ -80,11 +84,19 @@ def login():
     except: 
         return jsonify({'error': 'invalid password'}), 403
    
+    if fcmToken:
+        try:
+            users.update_prefs(user['$id'], prefs={
+                'fcmToken': fcmToken
+            })
+        except:
+            return jsonify({'error': 'failed to update fcm token'}), 500
+        
     sessid = user['$id']
     return jsonify({'sessid': sessid}), 201
 
 
-@app.route("/api/sync/<method>", methods=['POST'])
+@app.post("/api/sync/<method>")
 def sync(method):
     print(request.json)
     method = method[0].lower() + method[1:]
@@ -196,5 +208,110 @@ def fetch(method):
     for doc in docs:
         doc['data'] = json.loads(fernet.decrypt(doc['data'].encode()).decode())
     return jsonify(docs), 200
+
+@app.route("/api/push/<method>", methods=['PUT'])
+def pushData(method):
+    if not "userid" in request.json:
+        return jsonify({'error': 'no user id provided'}), 400
+    if not method:
+        return jsonify({'error': 'no method provided'}), 400
+    if not "data" in request.json:
+        return jsonify({'error': 'no data provided'}), 400
+
+    userid = request.json['userid']
+    data = request.json['data']
+    if type(data) != list:
+        data = [data]
+
+    fixedMethodName = method[0].upper() + method[1:]
+    for r in data:
+        r['recordType'] = fixedMethodName
+        if "time" not in r and ("startTime" not in r or "endTime" not in r):
+            return jsonify({'error': 'no start time or end time provided. If only one time is to be used, then use the "time" attribute instead.'}), 400
+        if ("startTime" in r and "endTime" not in r) or ("startTime" not in r and "endTime" in r):
+            return jsonify({'error': 'start time and end time must be provided together.'}), 400
+
+    prefs = users.get_prefs(userid)
+    fcmToken = prefs['fcmToken'] if 'fcmToken' in prefs else None
+    if not fcmToken:
+        return jsonify({'error': 'no fcm token found'}), 404
+
+    fcm = FCMNotification(service_account_file='service-account.json', project_id=os.environ['FCM_PROJECT_ID'])
+
+    try:
+        fcm.notify(fcm_token=fcmToken, data_payload={
+            "op": "PUSH",
+            "data": json.dumps(data),
+        })
+    except Exception as e:
+        return jsonify({'error': 'Message delivery failed', "fcmError": e}), 500
+
+    return jsonify({'success': True, "message": "request has been sent to device."}), 200
+
+@app.route("/api/delete/<method>", methods=['DELETE'])
+def delData(method):
+    if not "userid" in request.json:
+        return jsonify({'error': 'no user id provided'}), 400
+    if not method:
+        return jsonify({'error': 'no method provided'}), 400
+    if not "uuid" in request.json:
+        return jsonify({'error': 'no uuid provided'}), 400
+
+    userid = request.json['userid']
+    uuids = request.json['uuid']
+    if type(uuids) != list:
+        uuids = [uuids]
+
+    fixedMethodName = method[0].upper() + method[1:]
+
+    prefs = users.get_prefs(userid)
+    fcmToken = prefs['fcmToken'] if 'fcmToken' in prefs else None
+    if not fcmToken:
+        return jsonify({'error': 'no fcm token found'}), 404
+
+    fcm = FCMNotification(service_account_file='service-account.json', project_id=os.environ['FCM_PROJECT_ID'])
+
+    try:
+        fcm.notify(fcm_token=fcmToken, data_payload={
+            "op": "DEL",
+            "data": json.dumps({
+                "uuids": uuids,
+                "recordType": fixedMethodName
+            }),
+        })
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return jsonify({'error': 'Message delivery failed'}), 500
+
+    return jsonify({'success': True, "message": "request has been sent to device."}), 200
+
+
+@app.delete("/api/sync/<method>")
+def delFromDb(method):
+    if not "userid" in request.json:
+        return jsonify({'error': 'no user id provided'}), 400
+    if not method:
+        return jsonify({'error': 'no method provided'}), 400
+    if not "uuid" in request.json:
+        return jsonify({'error': 'no uuid provided'}), 400
+
+    userid = request.json['userid']
+    uuids = request.json['uuid']
+
+    try:
+        dbid = db.get(userid)['$id']
+    except:
+        return jsonify({'error': 'no database found for user'}), 404
+
+    try:
+        collectionid = db.get_collection(dbid, method)['$id']
+    except:
+        return jsonify({'error': 'no collection found for user'}), 404
+    print(dbid, collectionid, uuids[0])
+    for uuid in uuids:
+        try: db.delete_document(dbid, collectionid, uuid)
+        except Exception as e: print(e)
+
+    return jsonify({'success': True}), 200
 
 app.run(host=os.environ.get('APP_HOST', '0.0.0.0'), port=int(os.environ.get('APP_PORT', 6644)), debug=bool(os.environ.get('APP_DEBUG', False)))
