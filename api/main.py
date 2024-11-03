@@ -1,7 +1,7 @@
 import sentry_sdk
-from flask import Flask, abort, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os, json, requests
+import os, json
 from dotenv import load_dotenv
 load_dotenv()
 from pyfcm import FCMNotification
@@ -13,11 +13,10 @@ try:
     )
 except: pass
 
-from appwrite.client import Client
-from appwrite.services.databases import Databases
-from appwrite.query import Query
-from appwrite.services.users import Users
-from appwrite.services.messaging import Messaging
+import pymongo
+from bson.objectid import ObjectId
+from bson.errors import *
+mongo = pymongo.MongoClient(os.environ['MONGO_URI'])
 
 from argon2 import PasswordHasher
 ph = PasswordHasher()
@@ -25,45 +24,9 @@ ph = PasswordHasher()
 from cryptography.fernet import Fernet
 import base64
 
-client = (Client()
-    .set_endpoint(f'{os.environ["APPWRITE_HOST"]}/v1') 
-    .set_project(os.environ['APPWRITE_ID'])               
-    .set_key(os.environ['APPWRITE_KEY']))   
-db = Databases(client)
-users = Users(client)
-messaging = Messaging(client)
-
 app = Flask(__name__)
 CORS(app)
 
-def get_all_docs(data, collection, queries=[]):
-    docs = []
-    haslimit = False
-    for query in queries:
-        print(query)
-        if query.startswith("limit"): 
-            print(int(query.split("limit(")[1].split(")")[0]))
-            if int(query.split("limit(")[1].split(")")[0]) <= 100: print("true"); haslimit = True
-    
-    if not haslimit:
-        queries.append(Query.limit(100))
-        querylength = len(queries)
-        while True:
-            if docs:
-                queries.append(Query.cursor_after(docs[-1]['$id']))
-            try:
-                results = db.list_documents(data, collection, queries=queries)
-            except: return docs
-            if len(results['documents']) == 0:
-                break
-            results = results['documents']
-            docs += results
-            print(data, collection, len(docs))
-            if len(queries) != querylength:
-                queries.pop()
-    else:
-        return db.list_documents(data, collection, queries=queries)['documents']
-    return docs
 
 @app.route("/api/login", methods=['POST'])
 def login(): 
@@ -73,12 +36,15 @@ def login():
     password = request.json['password']
     fcmToken = request.json['fcmToken'] if 'fcmToken' in request.json else None
 
-    allusers = users.list(queries=[Query.equal('name', username)])['users']
-    if len(allusers) == 0:
-        sessid = users.create('unique()', name=username, password=password)['$id']
-        return jsonify({'sessid': sessid}), 201
+    db = mongo['hcgateway']
+    usrStore = db['users']
+
+    user = usrStore.find_one({'username': username})
+
+    if not user:
+        user = usrStore.insert_one({'username': username, 'password': ph.hash(password)}).inserted_id
+        return jsonify({'sessid': str(user)}), 201
     
-    user = allusers[0]
     try:
         ph.verify(user['password'], password)
     except: 
@@ -86,14 +52,12 @@ def login():
    
     if fcmToken:
         try:
-            users.update_prefs(user['$id'], prefs={
-                'fcmToken': fcmToken
-            })
+            usrStore.update_one({'username': username}, {"$set": {'fcmToken': fcmToken}})
         except:
             return jsonify({'error': 'failed to update fcm token'}), 500
         
-    sessid = user['$id']
-    return jsonify({'sessid': sessid}), 201
+    sessid = user['_id']
+    return jsonify({'sessid': str(sessid)}), 201
 
 
 @app.post("/api/sync/<method>")
@@ -109,7 +73,14 @@ def sync(method):
     
     userid = request.json['userid']
     print(userid)
-    user = users.get(userid)
+
+    db = mongo['hcgateway']
+    usrStore = db['users']
+
+    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    except InvalidId: return jsonify({'error': 'invalid user id'}), 400
+
+    print(user)
     hashed_password = user['password']
     key = base64.urlsafe_b64encode(hashed_password.encode("utf-8").ljust(32)[:32])
     fernet = Fernet(key)
@@ -119,30 +90,8 @@ def sync(method):
         data = [data]
     print(method, len(data))
 
-    try:
-        dbid = db.get(userid)['$id']
-    except:
-        try:
-            dbid = db.create(userid, userid)['$id']
-        except:
-            try:
-                dbid = db.list(queries=[Query.equal('name', userid)])['databases'][0]['$id']
-            except:
-                requests.post("http://localhost:6644/api/sync/"+method, json=request.json)
-    
-    # print(dbid)
-    try:
-        collectionid = db.get_collection(dbid, method)['$id']
-    except:
-        collectionid = db.create_collection(dbid, method, method, [], False)['$id']
-        # print(collectionid)
-        db.create_string_attribute(dbid, collectionid, "id", "99", True, array=False)
-        db.create_string_attribute(dbid, collectionid, "data", "9999999", True, array=False)
-        db.create_string_attribute(dbid, collectionid, "app", "999", True, array=False)
-        db.create_datetime_attribute(dbid, collectionid, "start", False, array=False)
-        db.create_datetime_attribute(dbid, collectionid, "end", False, array=False)
-    
-    print(dbid, collectionid)
+    db = mongo['hcgateway_'+userid]
+    collection = db[method]
     
     for item in data:
         # print(item)
@@ -165,14 +114,14 @@ def sync(method):
         # fernet.decrypt(encrypted.encode()).decode()
 
         # print(starttime, endtime)
-        r = db.list_documents(dbid, collectionid, queries=[Query.equal("id", itemid)])
-        if r['total'] > 0:
-            print("updating")
-            db.update_document(dbid, collectionid, itemid, {"id": itemid, 'data': encrypted, "app": item['metadata']['dataOrigin'], "start": starttime, "end": endtime})
-        else:
+        try:
             print("creating")
-            try: db.create_document(dbid, collectionid, itemid, {"id": itemid, 'data': encrypted, "app": item['metadata']['dataOrigin'], "start": starttime, "end": endtime})
-            except: pass
+            collection.insert_one({"_id": itemid, 'data': encrypted, "app": item['metadata']['dataOrigin'], "start": starttime, "end": endtime})
+        except:
+            print("updating")
+            collection.update_one({"_id": itemid}, {"$set": 
+                                                 {'data': encrypted, "app": item['metadata']['dataOrigin'], "start": starttime, "end": endtime}
+                                                })
 
     return jsonify({'success': True}), 200
 
@@ -184,7 +133,11 @@ def fetch(method):
         return jsonify({'error': 'no method provided'}), 400
 
     userid = request.json['userid']
-    user = users.get(userid)
+    db = mongo['hcgateway']
+    usrStore = db['users']
+
+    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    except InvalidId: return jsonify({'error': 'invalid user id'}), 400
     hashed_password = user['password']
     key = base64.urlsafe_b64encode(hashed_password.encode("utf-8").ljust(32)[:32])
     fernet = Fernet(key)
@@ -194,19 +147,14 @@ def fetch(method):
     else:
         queries = request.json['queries']
     
-    try:
-        dbid = db.get(userid)['$id']
-    except:
-        return jsonify({'error': 'no database found for user'}), 404
-
-    try:
-        collectionid = db.get_collection(dbid, method)['$id']
-    except:
-        return jsonify({'error': 'no collection found for user'}), 404
-
-    docs = get_all_docs(dbid, collectionid, queries=queries)
-    for doc in docs:
+    db = mongo['hcgateway_'+userid]
+    collection = db[method]
+    
+    docs = []
+    for doc in collection.find(queries):
         doc['data'] = json.loads(fernet.decrypt(doc['data'].encode()).decode())
+        docs.append(doc)
+
     return jsonify(docs), 200
 
 @app.route("/api/push/<method>", methods=['PUT'])
@@ -231,8 +179,13 @@ def pushData(method):
         if ("startTime" in r and "endTime" not in r) or ("startTime" not in r and "endTime" in r):
             return jsonify({'error': 'start time and end time must be provided together.'}), 400
 
-    prefs = users.get_prefs(userid)
-    fcmToken = prefs['fcmToken'] if 'fcmToken' in prefs else None
+    db = mongo['hcgateway']
+    usrStore = db['users']
+
+    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    except InvalidId: return jsonify({'error': 'invalid user id'}), 400
+
+    fcmToken = user['fcmToken'] if 'fcmToken' in user else None
     if not fcmToken:
         return jsonify({'error': 'no fcm token found'}), 404
 
@@ -264,8 +217,13 @@ def delData(method):
 
     fixedMethodName = method[0].upper() + method[1:]
 
-    prefs = users.get_prefs(userid)
-    fcmToken = prefs['fcmToken'] if 'fcmToken' in prefs else None
+    db = mongo['hcgateway']
+    usrStore = db['users']
+
+    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    except InvalidId: return jsonify({'error': 'invalid user id'}), 400
+
+    fcmToken = user['fcmToken'] if 'fcmToken' in user else None
     if not fcmToken:
         return jsonify({'error': 'no fcm token found'}), 404
 
@@ -280,14 +238,17 @@ def delData(method):
             }),
         })
     except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return jsonify({'error': 'Message delivery failed'}), 500
+        sentry_sdk.capture_exception(e)
+
+        return jsonify({'error': 'Message delivery failed'}), 500
+
 
     return jsonify({'success': True, "message": "request has been sent to device."}), 200
 
 
 @app.delete("/api/sync/<method>")
 def delFromDb(method):
+    method = method[0].lower() + method[1:]
     if not "userid" in request.json:
         return jsonify({'error': 'no user id provided'}), 400
     if not method:
@@ -298,18 +259,15 @@ def delFromDb(method):
     userid = request.json['userid']
     uuids = request.json['uuid']
 
-    try:
-        dbid = db.get(userid)['$id']
-    except:
-        return jsonify({'error': 'no database found for user'}), 404
+    if type(uuids) != list:
+        uuids = [uuids]
 
-    try:
-        collectionid = db.get_collection(dbid, method)['$id']
-    except:
-        return jsonify({'error': 'no collection found for user'}), 404
-    print(dbid, collectionid, uuids[0])
+    db = mongo['hcgateway_'+userid]
+    collection = db[method]
+    print(collection)
     for uuid in uuids:
-        try: db.delete_document(dbid, collectionid, uuid)
+        print(uuid)
+        try: collection.delete_one({"_id": uuid})
         except Exception as e: print(e)
 
     return jsonify({'success': True}), 200
