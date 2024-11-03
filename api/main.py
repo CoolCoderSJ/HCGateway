@@ -116,7 +116,7 @@ def sync(method):
         # print(starttime, endtime)
         try:
             print("creating")
-            collection.insert_one({"_id": itemid, 'data': encrypted, "app": item['metadata']['dataOrigin'], "start": starttime, "end": endtime})
+            collection.insert_one({"_id": itemid, "id": itemid, 'data': encrypted, "app": item['metadata']['dataOrigin'], "start": starttime, "end": endtime})
         except:
             print("updating")
             collection.update_one({"_id": itemid}, {"$set": 
