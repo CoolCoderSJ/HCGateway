@@ -40,7 +40,7 @@ alldbs = db.list(queries=[Query.limit(100)])['databases']
 
 for dbdata in alldbs:
     dbid = dbdata['$id']
-    print(dbid)
+    print("Migrating data for user: ", dbid)
 
     user = users.get(dbid)
     db_ = mongo["hcgateway"]
@@ -54,10 +54,8 @@ for dbdata in alldbs:
 
     collections = db.list_collections(dbid, queries=[Query.limit(100)])['collections']
     for collection in collections:
-        print(collection['name'])
         cid = collection['$id']
         docs = get_all_docs(dbid, cid)
-        print(len(docs), db.list_documents(dbid, cid)['total'])
         if not docs: continue
         for doc in docs:
             del doc['$id']
@@ -72,4 +70,5 @@ for dbdata in alldbs:
         db_ = mongo["hcgateway_"+dbid]
         col = db_[collection['name']]
         col.insert_many(docs)
-        print("done")
+
+print("Migration complete!")
