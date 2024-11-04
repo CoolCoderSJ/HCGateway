@@ -9,3 +9,15 @@ services:
       - ./api/.env  # Pass environment variables from ./api/.env
     container_name: hcgateway_api  # Assign a name to the container
     restart: always  # Automatically restart the container if it crashes
+
+  db:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./db:/data/db
+    container_name: hcgateway_db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
