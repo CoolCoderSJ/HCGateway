@@ -43,6 +43,8 @@ def login():
 
     if not user:
         user = usrStore.insert_one({'username': username, 'password': ph.hash(password)}).inserted_id
+        usrStore.insert_one({'_id': str(user), 'username': username, 'password': ph.hash(password)})
+        usrStore.delete_one({'_id': ObjectId(user)})
         return jsonify({'sessid': str(user)}), 201
     
     try:
@@ -77,7 +79,7 @@ def sync(method):
     db = mongo['hcgateway']
     usrStore = db['users']
 
-    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    try: user = usrStore.find_one({'_id': userid})
     except InvalidId: return jsonify({'error': 'invalid user id'}), 400
 
     print(user)
@@ -136,7 +138,7 @@ def fetch(method):
     db = mongo['hcgateway']
     usrStore = db['users']
 
-    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    try: user = usrStore.find_one({'_id': userid})
     except InvalidId: return jsonify({'error': 'invalid user id'}), 400
     hashed_password = user['password']
     key = base64.urlsafe_b64encode(hashed_password.encode("utf-8").ljust(32)[:32])
@@ -182,7 +184,7 @@ def pushData(method):
     db = mongo['hcgateway']
     usrStore = db['users']
 
-    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    try: user = usrStore.find_one({'_id': userid})
     except InvalidId: return jsonify({'error': 'invalid user id'}), 400
 
     fcmToken = user['fcmToken'] if 'fcmToken' in user else None
@@ -220,7 +222,7 @@ def delData(method):
     db = mongo['hcgateway']
     usrStore = db['users']
 
-    try: user = usrStore.find_one({'_id': ObjectId(userid)})
+    try: user = usrStore.find_one({'_id': userid})
     except InvalidId: return jsonify({'error': 'invalid user id'}), 400
 
     fcmToken = user['fcmToken'] if 'fcmToken' in user else None
