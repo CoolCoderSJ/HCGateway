@@ -11,6 +11,9 @@ The platform consists of two parts:
 > [!IMPORTANT]
 > The database was recently migrated from Appwrite to MongoDB. If you were using the Appwrite version, you will need to migrate your data to the new database. You can find the migration script in the `scripts/` folder. You will need to install the `appwrite` and `pymongo` libraries to run the script, then run the script with the following command: `python3 migrate_1.5.0.py`.
 
+> [!WARNING]
+> v1 routes for the server are now deprecated and will be removed by March 4th, 2025 (90 days) for security reasons. Please update your applications to use the v2 routes. You can find the documentation for the v2 routes [here](https://hcgateway.shuchir.dev/)
+
 ## How it Works
 - The mobile application pings the server every 2 hours to send data. The following data types are supported-
     - Active Calories Burned (`activeCaloriesBurned`)
@@ -66,9 +69,13 @@ The platform allows two-way sync, which means you can make changes to your local
 ### Users Structure
 ```
 users {
+    _id: string
     username: string
     password: string
     fcmToken: string
+    expiry: datetime
+    token: string
+    refresh: string
 }
 ```
 > [!NOTE]
