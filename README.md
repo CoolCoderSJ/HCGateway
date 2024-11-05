@@ -69,9 +69,13 @@ The platform allows two-way sync, which means you can make changes to your local
 ### Users Structure
 ```
 users {
+    _id: string
     username: string
     password: string
     fcmToken: string
+    expiry: datetime
+    token: string
+    refresh: string
 }
 ```
 > [!NOTE]

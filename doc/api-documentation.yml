@@ -24,6 +24,27 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/loginObject"
+  "/api/v2/refresh":
+    post:
+      operationId: refresh_token
+      description: Refresh a user token.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                refresh:
+                  nullable: false
+                  type: string
+                  description: The refresh token you got when you logged in.
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/loginObject"
   "/api/v2/fetch/{method}":
     post:
       operationId: fetch
@@ -158,10 +179,19 @@ components:
           description: A confirmation message.
     loginObject:
       properties:
-        sessid:
+        token:
           nullable: false
           type: string
-          description: The user id to use for future requests
+          description: The bearer token you should use for future requests.
+        refresh:
+          nullable: false
+          type: string
+          description: The refresh token you should use to get a new token after the current one expires.
+        expiry:
+          nullable: false
+          type: string
+          format: date-time
+          description: The time the token expires. This is always 12 hours after the token was issued.
     loginParameters:
       properties:
         username:
