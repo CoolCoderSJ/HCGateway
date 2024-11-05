@@ -64,6 +64,11 @@ paths:
           nutrition, ovulationTest, oxygenSaturation, power, respiratoryRate, restingHeartRate,
           sleepSession, speed, steps, stepsCadence, totalCaloriesBurned, vo2Max, weight,
           wheelchairPushes'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/fetchParameters"
       responses:
         '200':
           description: ''
