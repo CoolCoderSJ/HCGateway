@@ -115,10 +115,7 @@ def refresh():
 
     if not user:
         return jsonify({'error': 'invalid refresh token'}), 403
-
-    if datetime.datetime.now() > user['expiry']:
-        return jsonify({'error': 'refresh token expired. Use /api/v2/login to reauthenticate.'}), 403
-
+    
     token = secrets.token_urlsafe(32)
     refresh = secrets.token_urlsafe(32)
     expiryDate = datetime.datetime.now() + datetime.timedelta(hours=12)
