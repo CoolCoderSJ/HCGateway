@@ -218,21 +218,19 @@ const askForPermissions = async () => {
 
 const refreshTokenFunc = async () => {
   let refreshToken = await get('refreshToken');
+  if (!refreshToken) return;
   try {
     let response = await axios.post(`${apiBase}/api/v2/refresh`, {
-      refreshToken: refreshToken
+      refresh: refreshToken
     });
     if ('token' in response.data) {
       console.log(response.data);
-      setPlain('login', response.data.token).then(() => {
-        login = response.data.token;
-        refreshToken = response.data.refreshToken;
-        setPlain('refreshToken', refreshToken);
-        forceUpdate();
-        Toast.show({
-          type: 'success',
-          text1: "Token refreshed successfully",
-        })
+      await setPlain('login', response.data.token)
+      login = response.data.token;
+      await setPlain('refreshToken', response.data.refresh);
+      Toast.show({
+        type: 'success',
+        text1: "Token refreshed successfully",
       })
     }
     else {
@@ -243,7 +241,6 @@ const refreshTokenFunc = async () => {
       })
       login = null;
       delkey('login');
-      forceUpdate();
     }
   }
 
@@ -255,7 +252,6 @@ const refreshTokenFunc = async () => {
     })
     login = null;
     delkey('login');
-    forceUpdate();
   }
 }
 
@@ -441,18 +437,16 @@ export default function App() {
     let response = await axios.post(`${apiBase}/api/v2/login`, form);
     if ('token' in response.data) {
       console.log(response.data);
-      setPlain('login', response.data.token).then(() => {
-        login = response.data.token;
-        refreshToken = response.data.refreshToken;
-        setPlain('refreshToken', refreshToken);
-        forceUpdate();
-        Toast.hide();
-        Toast.show({
-          type: 'success',
-          text1: "Logged in successfully",
-        })
-        askForPermissions();
+      await setPlain('login', response.data.token);
+      login = response.data.token;
+      await setPlain('refreshToken', response.data.refresh);
+      forceUpdate();
+      Toast.hide();
+      Toast.show({
+        type: 'success',
+        text1: "Logged in successfully",
       })
+      askForPermissions();
     }
     else {
       Toast.hide();
