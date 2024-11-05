@@ -1,0 +1,201 @@
+---
+openapi: 3.0.0
+info:
+  version: 2.0.0
+  title: HCGateway
+  description: ''
+servers:
+- url: https://api.hcgateway.shuchir.dev
+paths:
+  "/api/v2/login":
+    post:
+      operationId: get_token
+      description: Login a user and get a token to use for authentiction.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/loginParameters"
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/loginObject"
+  "/api/v2/fetch/{method}":
+    post:
+      operationId: fetch
+      description: Get data from the database.
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: method
+        required: true
+        schema:
+          type: string
+        description: 'Can be one of the following: activeCaloriesBurned, basalBodyTemperature,
+          basalMetabolicRate, bloodGlucose, bloodPressure, bodyFat, bodyTemperature,
+          boneMass, cervicalMucus, distance, exerciseSession, elevationGained, floorsClimbed,
+          heartRate, height, hydration, leanBodyMass, menstruationFlow, menstruationPeriod,
+          nutrition, ovulationTest, oxygenSaturation, power, respiratoryRate, restingHeartRate,
+          sleepSession, speed, steps, stepsCadence, totalCaloriesBurned, vo2Max, weight,
+          wheelchairPushes'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/dataObject"
+  "/api/v2/push/{method}":
+    put:
+      operationId: pushData
+      description: Insert data into your local Health Connect store. This method does
+        not add the data to the HCGateway database. This method is only used to push
+        data to your local Health Connect store. This is so you can sync + fetch to
+        verify the record has been added.
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: method
+        required: true
+        schema:
+          type: string
+        description: 'Can be one of the following: activeCaloriesBurned, basalBodyTemperature,
+          basalMetabolicRate, bloodGlucose, bloodPressure, bodyFat, bodyTemperature,
+          boneMass, cervicalMucus, distance, exerciseSession, elevationGained, floorsClimbed,
+          heartRate, height, hydration, leanBodyMass, menstruationFlow, menstruationPeriod,
+          nutrition, ovulationTest, oxygenSaturation, power, respiratoryRate, restingHeartRate,
+          sleepSession, speed, steps, stepsCadence, totalCaloriesBurned, vo2Max, weight,
+          wheelchairPushes'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/silentObject"
+  "/api/delete/{method}":
+    delete:
+      operationId: deleteData
+      description: Request deletion for a record. This method does not delete the
+        record from the HCGateway database. This method is only used to request deletion
+        of a record from your local Health Connect store. The app will delete it from
+        the database using the sync method once it has deleted the record(s) locally.
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: method
+        required: true
+        schema:
+          type: string
+        description: 'Can be one of the following: activeCaloriesBurned, basalBodyTemperature,
+          basalMetabolicRate, bloodGlucose, bloodPressure, bodyFat, bodyTemperature,
+          boneMass, cervicalMucus, distance, exerciseSession, elevationGained, floorsClimbed,
+          heartRate, height, hydration, leanBodyMass, menstruationFlow, menstruationPeriod,
+          nutrition, ovulationTest, oxygenSaturation, power, respiratoryRate, restingHeartRate,
+          sleepSession, speed, steps, stepsCadence, totalCaloriesBurned, vo2Max, weight,
+          wheelchairPushes'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/deleteParameters"
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/silentObject"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    dataObject:
+      properties:
+        _id:
+          nullable: false
+          type: string
+          description: The id Health Connect stored the object with.
+        data:
+          nullable: false
+          type: object
+          description: The actual data stored in Health Connect
+        id:
+          nullable: false
+          type: string
+        start:
+          nullable: false
+          type: string
+          format: date-time
+          description: The start time of the data
+        end:
+          nullable: true
+          type: string
+          format: date-time
+          description: The end time of the data. Only present if the data is a time-series.
+        app:
+          nullable: false
+          type: string
+          description: The app that created the data
+    silentObject:
+      properties:
+        success:
+          nullable: false
+          type: boolean
+          description: Sucessfully sent the data or not
+        message:
+          nullable: false
+          type: string
+          description: A confirmation message.
+    loginObject:
+      properties:
+        sessid:
+          nullable: false
+          type: string
+          description: The user id to use for future requests
+    loginParameters:
+      properties:
+        username:
+          nullable: false
+          type: string
+          required: true
+        password:
+          nullable: false
+          type: string
+          required: true
+    fetchParameters:
+      properties:
+        queries:
+          nullable: true
+          type: object
+          description: Queries to use to filter the data. Must be a valid mongodb
+            query. See https://www.mongodb.com/docs/languages/python/pymongo-driver/current/read/specify-a-query/
+            for more information.
+    pushParameters:
+      properties:
+        data:
+          nullable: false
+          type: array
+          items:
+            type: object
+          description: The record to push. This can be an object or array of objects.
+            See https://developer.android.com/reference/kotlin/androidx/health/connect/client/records/package-summary#classes
+            for each data type's object structure.
+    deleteParameters:
+      properties:
+        uuid:
+          nullable: false
+          type: array
+          items:
+            type: string
+          description: The uuid of the record to delete. Can be a string or an array
+            of strings.
