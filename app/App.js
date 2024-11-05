@@ -216,6 +216,49 @@ const askForPermissions = async () => {
   }
 };
 
+const refreshTokenFunc = async () => {
+  let refreshToken = await get('refreshToken');
+  try {
+    let response = await axios.post(`${apiBase}/api/v2/refresh`, {
+      refreshToken: refreshToken
+    });
+    if ('token' in response.data) {
+      console.log(response.data);
+      setPlain('login', response.data.token).then(() => {
+        login = response.data.token;
+        refreshToken = response.data.refreshToken;
+        setPlain('refreshToken', refreshToken);
+        forceUpdate();
+        Toast.show({
+          type: 'success',
+          text1: "Token refreshed successfully",
+        })
+      })
+    }
+    else {
+      Toast.show({
+        type: 'error',
+        text1: "Token refresh failed",
+        text2: response.data.error
+      })
+      login = null;
+      delkey('login');
+      forceUpdate();
+    }
+  }
+
+  catch (err) {
+    Toast.show({
+      type: 'error',
+      text1: "Token refresh failed",
+      text2: err.message
+    })
+    login = null;
+    delkey('login');
+    forceUpdate();
+  }
+}
+
 const sync = async () => {
   const isInitialized = await initialize();
   console.log("Syncing data...");
@@ -259,9 +302,12 @@ const sync = async () => {
           setTimeout(async () => {
             try {
               let record = await readRecord(recordTypes[i], records[j].metadata.id);
-              await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
-                userid: login,
+              await axios.post(`${apiBase}/api/v2/sync/${recordTypes[i]}`, {
                 data: record
+              }, {
+                headers: {
+                  "Authorization": `Bearer ${login}`
+                }
               })
             }
             catch (err) {
@@ -300,9 +346,12 @@ const sync = async () => {
       }
 
       else {
-        await axios.post(`${apiBase}/api/sync/${recordTypes[i]}`, {
-          userid: login,
+        await axios.post(`${apiBase}/api/v2/sync/${recordTypes[i]}`, {
           data: records
+        }, {
+          headers: {
+            "Authorization": `Bearer ${login}`
+          }
         });
         numRecordsSynced += records.length;
         try {
@@ -364,10 +413,12 @@ const handleDel = async (message) => {
   console.log(data);
 
   deleteRecordsByUuids(data.recordType, data.uuids, data.uuids)
-  axios.delete(`${apiBase}/api/sync/${data.recordType}`, {
-    data :{
+  axios.delete(`${apiBase}/api/v2/sync/${data.recordType}`, {
+    data: {
       uuid: data.uuids,
-      userid: login
+    },
+    headers: {
+      "Authorization": `Bearer ${login}`
     }
   })
 }
@@ -387,11 +438,13 @@ export default function App() {
     try {
     let fcmToken = await requestUserPermission();
     form.fcmToken = fcmToken;
-    let response = await axios.post(`${apiBase}/api/login`, form);
-    if ('sessid' in response.data) {
-      console.log(response.data.sessid);
-      setPlain('login', response.data.sessid).then(() => {
-        login = response.data.sessid;
+    let response = await axios.post(`${apiBase}/api/v2/login`, form);
+    if ('token' in response.data) {
+      console.log(response.data);
+      setPlain('login', response.data.token).then(() => {
+        login = response.data.token;
+        refreshToken = response.data.refreshToken;
+        setPlain('refreshToken', refreshToken);
         forceUpdate();
         Toast.hide();
         Toast.show({
@@ -434,32 +487,34 @@ export default function App() {
         .then(res => {
           if (res) taskDelay = Number(res);
         })
+
         ReactNativeForegroundService.add_task(() => sync(), {
           delay: taskDelay,
           onLoop: true,
           taskId: 'hcgateway_sync',
           onError: e => console.log(`Error logging:`, e),
         });
+
+        ReactNativeForegroundService.add_task(() => refreshTokenFunc(), {
+          delay: 10800 * 1000,
+          onLoop: true,
+          taskId: 'refresh_token',
+          onError: e => console.log(`Error logging:`, e),
+        });
+
+        ReactNativeForegroundService.start({
+          id: 1244,
+          title: 'HCGateway Sync Service',
+          message: 'HCGateway is working in the background to sync your data.',
+          icon: 'ic_launcher',
+          setOnlyAlertOnce: true,
+          color: '#000000',
+        }).then(() => console.log('Foreground service started'));
+
         forceUpdate()
       }
     })
   }, [login])
-
-
-  const startTask = () => {
-    ReactNativeForegroundService.start({
-      id: 1244,
-      title: 'HCGateway Sync Service',
-      message: 'HCGateway is working in the background to sync your data.',
-      icon: 'ic_launcher',
-      setOnlyAlertOnce: true,
-      color: '#000000',
-    }).then(() => console.log('Foreground service started'));
-  };
-
-  const stopTask = () => {
-    ReactNativeForegroundService.stopAll();
-  };
 
   return (
     <View style={styles.container}>
@@ -532,42 +587,6 @@ export default function App() {
               title="Sync Now"
               onPress={() => {
                 sync()
-              }}
-            />
-          </View>
-
-          <View
-          style={{ 
-            marginTop: 20,
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            width: '100%'
-           }}
-          >
-            <Button
-              title="Start Sync Service"
-              onPress={() => {
-                startTask()
-                Toast.show({
-                  type: 'success',
-                  text1: "Sync service started",
-                })
-              }}
-            />
-            <Button
-              title="Stop Sync Service"
-              onPress={() => {
-                stopTask();
-                ReactNativeForegroundService.add_task(() => sync(), {
-                  delay: taskDelay,
-                  onLoop: true,
-                  taskId: 'hcgateway_sync',
-                  onError: e => console.log(`Error logging:`, e),
-                });
-                Toast.show({
-                  type: 'success',
-                  text1: "Sync service stopped",
-                })
               }}
             />
           </View>
