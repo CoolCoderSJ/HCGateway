@@ -189,7 +189,8 @@ def pushData(method):
             "data": json.dumps(data),
         })
     except Exception as e:
-        return jsonify({'error': 'Message delivery failed', "fcmError": e}), 500
+        app.logger.error(f"Message delivery failed: {e}")
+        return jsonify({'error': 'Message delivery failed'}), 500
 
     return jsonify({'success': True, "message": "request has been sent to device."}), 200
 
