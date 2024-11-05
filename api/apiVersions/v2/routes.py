@@ -83,7 +83,7 @@ def login():
         
     sessid = user['_id']
 
-    if datetime.datetime.now() > user['expiry']:
+    if not "expiry" in user or datetime.datetime.now() > user['expiry']:
         token = secrets.token_urlsafe(32)
         refresh = secrets.token_urlsafe(32)
         expiryDate = datetime.datetime.now() + datetime.timedelta(hours=12)
