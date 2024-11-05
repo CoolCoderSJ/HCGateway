@@ -82,10 +82,17 @@ def login():
             return jsonify({'error': 'failed to update fcm token'}), 500
         
     sessid = user['_id']
-    token = secrets.token_urlsafe(32)
-    refresh = secrets.token_urlsafe(32)
-    expiryDate = datetime.datetime.now() + datetime.timedelta(hours=12)
-    usrStore.update_one({'_id': sessid}, {"$set": {'token': token, 'refresh': refresh, 'expiry': expiryDate}})
+
+    if datetime.datetime.now() > user['expiry']:
+        token = secrets.token_urlsafe(32)
+        refresh = secrets.token_urlsafe(32)
+        expiryDate = datetime.datetime.now() + datetime.timedelta(hours=12)
+        usrStore.update_one({'_id': sessid}, {"$set": {'token': token, 'refresh': refresh, 'expiry': expiryDate}})
+
+    else:
+        token = user['token']
+        refresh = user['refresh']
+        expiryDate = user['expiry']
 
     return jsonify({
             "token": token,
