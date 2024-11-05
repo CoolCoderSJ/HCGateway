@@ -514,7 +514,6 @@ export default function App() {
     <View style={styles.container}>
       {login &&
         <View>
-          <Text style={{ fontSize: 20, marginVertical: 10 }}>Your User ID is {login}. Do NOT share this with anyone.</Text>
           <Text style={{ fontSize: 17, marginVertical: 10 }}>Last Sync: {lastSync}</Text>
 
           <Text style={{ marginTop: 10, fontSize: 15 }}>API Base URL:</Text>
