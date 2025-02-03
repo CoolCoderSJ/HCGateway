@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ['python311', 'python311Packages.pip']
+
+[phases.install]
+cmds = ["pip install -r api/requirements.txt"]
+
+[start]
+cmd = "python api/main.py"
