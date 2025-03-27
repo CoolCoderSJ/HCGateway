@@ -75,7 +75,9 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/dataObject"
+                type: array
+                items:
+                  "$ref": "#/components/schemas/dataObject"
   "/api/v2/push/{method}":
     put:
       operationId: pushData
